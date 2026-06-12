@@ -23,7 +23,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# 初始化資料：如果沒有快取，則下載並處理資料
+# 初始化資料：啟動時從網路下載最新資料
 @app.on_event("startup")
 async def startup_event():
     """應用啟動時載入資料"""
@@ -31,15 +31,10 @@ async def startup_event():
         print("\n" + "="*60)
         print("Loading Taipei MRT Congestion Data...")
         print("="*60)
+        print("[INFO] Downloading index CSV from Taipei Open Data...")
 
-        # Try to use local index CSV (latest 1 month only for faster processing)
-        index_csv_path = r"C:\Users\陳宥希\Downloads\臺北捷運每日分時各站OD流量統計資料.csv"
-        if os.path.exists(index_csv_path):
-            print(f"[OK] Found index CSV, loading latest 1 month...")
-            processor.download_and_parse_data(csv_path=index_csv_path, months=1)
-        else:
-            print(f"[WARN] Index CSV not found: {index_csv_path}")
-            processor.download_and_parse_data()
+        # Always download from network - no local CSV dependency
+        processor.download_and_parse_data(months=3)
 
         print("="*60 + "\n")
     else:

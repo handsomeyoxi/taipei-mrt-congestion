@@ -9,7 +9,7 @@ from datetime import datetime
 os.makedirs(CACHE_DIR, exist_ok=True)
 
 # Cache version to force refresh when logic changes
-CACHE_VERSION = 2  # Increment to invalidate old caches
+CACHE_VERSION = 3  # Increment to invalidate old caches
 
 class DataProcessor:
     def __init__(self):
@@ -74,25 +74,50 @@ class DataProcessor:
             return []
 
     def fetch_index_csv(self):
-        """Get data URLs from index CSV"""
+        """Get data URLs from Taipei Open Data API"""
         try:
             from config import INDEX_CSV_URL
-            response = requests.get(INDEX_CSV_URL, timeout=10)
+            print(f"[INFO] Fetching from: {INDEX_CSV_URL}")
+            response = requests.get(INDEX_CSV_URL, timeout=30)
             response.encoding = 'utf-8'
 
-            # Parse JSON response
+            # Parse JSON response - handle multiple API formats
             data = response.json()
             urls = []
 
-            if 'result' in data and 'results' in data['result']:
+            # Format 1: {result: {results: [...]}}
+            if isinstance(data, dict) and 'result' in data and 'results' in data.get('result', {}):
                 for item in data['result']['results']:
-                    if 'resourceURL' in item:
-                        urls.append(item['resourceURL'])
+                    # Look for download URL in different field names
+                    url = item.get('downloadURL') or item.get('resourceURL') or item.get('url')
+                    if url:
+                        urls.append(url)
 
-            print(f"[OK] Got {len(urls)} data URLs")
+            # Format 2: Direct array of resources
+            elif isinstance(data, list):
+                for item in data:
+                    url = item.get('downloadURL') or item.get('resourceURL') or item.get('url')
+                    if url:
+                        urls.append(url)
+
+            # Format 3: {results: [...]} (without result wrapper)
+            elif 'results' in data:
+                for item in data['results']:
+                    url = item.get('downloadURL') or item.get('resourceURL') or item.get('url')
+                    if url:
+                        urls.append(url)
+
+            if urls:
+                print(f"[OK] Got {len(urls)} data URLs from API")
+            else:
+                print(f"[WARN] No download URLs found in API response")
+                print(f"[DEBUG] Response keys: {list(data.keys()) if isinstance(data, dict) else type(data)}")
+
             return urls
         except Exception as e:
             print(f"[ERROR] Index CSV fetch failed: {e}")
+            import traceback
+            traceback.print_exc()
             return []
 
     def download_and_parse_data(self, urls=None, csv_path=None, months=1):
@@ -102,6 +127,12 @@ class DataProcessor:
             print(f"[INFO] Reading local index CSV: {csv_path}")
             urls = self.fetch_index_csv_local(csv_path, months=months)
 
+        # If no URLs yet, try to fetch from network
+        if urls is None or len(urls) == 0:
+            print(f"[INFO] Fetching index from Taipei Open Data API...")
+            urls = self.fetch_index_csv()
+
+        # If still no URLs, use sample data as fallback
         if urls is None or len(urls) == 0:
             print("[WARN] Unable to get data URLs, using sample data")
             self._generate_sample_data()

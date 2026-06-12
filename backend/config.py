@@ -1,7 +1,8 @@
 import os
 
-# 索引 CSV URL
-INDEX_CSV_URL = "https://data.taipei/api/getResourceList?scope=resourceAquire&rid=a1b4714b-3b75-4ff8-9ffc-2b411d5f0ad1"
+# 索引 CSV URL - 從台北市開放資料平台取得最近3個月的 MRT OD 流量資料
+# 資料集: 台北捷運每日分時各站OD流量統計資料
+INDEX_CSV_URL = "https://data.taipei/api/v1/dataset/63f31c7e-7fc3-418b-bd82-b95158755b4d?limit=100"
 
 # 資料快取目錄
 CACHE_DIR = os.path.join(os.path.dirname(__file__), "cache")
