@@ -88,10 +88,24 @@ class DataProcessor:
 
             # Parse JSON response - handle multiple API formats
             data = response.json()
+
+            # Debug: Print full response structure
+            print(f"\n[DEBUG] ===== Full API Response =====")
+            print(f"Response type: {type(data)}")
+            if isinstance(data, dict):
+                print(f"Top-level keys: {list(data.keys())}")
+                # Print full response with indentation
+                import json as json_lib
+                print(json_lib.dumps(data, ensure_ascii=False, indent=2)[:2000])  # First 2000 chars
+            else:
+                print(f"Response: {str(data)[:500]}")
+            print(f"[DEBUG] ===== End API Response =====\n")
+
             urls = []
 
             # Format 1: {result: {results: [...]}}
             if isinstance(data, dict) and 'result' in data and 'results' in data.get('result', {}):
+                print(f"[DEBUG] Detected Format 1: result.results")
                 for item in data['result']['results']:
                     # Look for download URL in different field names
                     url = item.get('downloadURL') or item.get('resourceURL') or item.get('url')
@@ -100,23 +114,56 @@ class DataProcessor:
 
             # Format 2: Direct array of resources
             elif isinstance(data, list):
+                print(f"[DEBUG] Detected Format 2: Direct array")
                 for item in data:
                     url = item.get('downloadURL') or item.get('resourceURL') or item.get('url')
                     if url:
                         urls.append(url)
 
             # Format 3: {results: [...]} (without result wrapper)
-            elif 'results' in data:
+            elif isinstance(data, dict) and 'results' in data:
+                print(f"[DEBUG] Detected Format 3: results (no wrapper)")
                 for item in data['results']:
                     url = item.get('downloadURL') or item.get('resourceURL') or item.get('url')
                     if url:
                         urls.append(url)
 
+            # Format 4: Try to find result.results structure even if it's nested differently
+            elif isinstance(data, dict) and 'result' in data:
+                result = data['result']
+                print(f"[DEBUG] Found 'result' key, investigating structure...")
+                print(f"[DEBUG] result type: {type(result)}")
+                if isinstance(result, dict):
+                    print(f"[DEBUG] result keys: {list(result.keys())}")
+                    # Try to find results or resources
+                    if 'results' in result:
+                        print(f"[DEBUG] Found result.results, extracting...")
+                        for item in result.get('results', []):
+                            print(f"[DEBUG] Item keys: {list(item.keys()) if isinstance(item, dict) else type(item)}")
+                            # Check all possible field names
+                            for field in ['downloadURL', 'resourceURL', 'url', 'download_url', 'resource_url',
+                                        'URL', 'downloadUrl', 'resourceUrl', 'href', 'uri', 'link']:
+                                if field in item:
+                                    urls.append(item[field])
+                                    print(f"[DEBUG] Found URL in field '{field}': {item[field][:50]}...")
+                                    break
+                    elif isinstance(result, list):
+                        print(f"[DEBUG] result is a list with {len(result)} items")
+                        for item in result:
+                            print(f"[DEBUG] Item: {str(item)[:200]}")
+
             if urls:
                 print(f"[OK] Got {len(urls)} data URLs from API")
+                for i, url in enumerate(urls[:3], 1):  # Show first 3 URLs
+                    print(f"     URL {i}: {url[:80]}...")
             else:
                 print(f"[WARN] No download URLs found in API response")
-                print(f"[DEBUG] Response keys: {list(data.keys()) if isinstance(data, dict) else type(data)}")
+                if isinstance(data, dict):
+                    print(f"[DEBUG] Response keys: {list(data.keys())}")
+                    if 'result' in data:
+                        result = data['result']
+                        if isinstance(result, dict):
+                            print(f"[DEBUG] result keys: {list(result.keys())}")
 
             return urls
         except Exception as e:
