@@ -13,6 +13,7 @@ class DataProcessor:
         self.cache_file = os.path.join(CACHE_DIR, "congestion_data.json")
         self.stations_file = os.path.join(CACHE_DIR, "stations.json")
         self.data = {}
+        self.station_percentiles = {}  # Store P33/P66 for each station
         self.load_from_cache()
 
     def load_from_cache(self):
@@ -153,16 +154,27 @@ class DataProcessor:
         # MRT operating hours: 06:00-23:59 (hours 6-23)
         MRT_OPERATING_HOURS = set(range(6, 24))
 
-        # Calculate percentiles using only operating hours
-        operating_data = grouped[grouped['hour'].isin(MRT_OPERATING_HOURS)]
-        all_people = operating_data['avg_people'].values
-        p33 = np.percentile(all_people, 33)
-        p66 = np.percentile(all_people, 66)
-
         # Organize by station
         self.data = {}
+        self.station_percentiles = {}
+
         for station in grouped['station'].unique():
             station_data = grouped[grouped['station'] == station]
+
+            # Calculate percentiles FOR THIS STATION ONLY
+            station_operating = station_data[station_data['hour'].isin(MRT_OPERATING_HOURS)]
+            station_people = station_operating['avg_people'].values
+            p33 = np.percentile(station_people, 33)
+            p66 = np.percentile(station_people, 66)
+
+            # Store the percentiles for this station
+            self.station_percentiles[station] = {
+                "p33": round(p33, 1),
+                "p66": round(p66, 1),
+                "min": round(station_people.min(), 1),
+                "max": round(station_people.max(), 1)
+            }
+
             station_dict = {}
 
             for weekday in range(7):
@@ -182,7 +194,7 @@ class DataProcessor:
                             "is_operating": False
                         }
                     else:
-                        # Operating - determine level
+                        # Operating - determine level using THIS STATION'S percentiles
                         if people <= p33:
                             level = "low"
                         elif people <= p66:
@@ -229,19 +241,34 @@ class DataProcessor:
 
         print(f"[OK] Processed {len(self.data)} stations")
 
-        # Print diagnostics
-        print(f"\n=== Processed Data Diagnostics ===")
+        # Print diagnostics - show percentiles for all stations
+        print(f"\n=== Percentile Thresholds by Station ===")
+        print(f"{'Station':<15} | {'P33 (Low/Mid)':<15} | {'P66 (Mid/High)':<15}")
+        print("-" * 50)
+        for station in sorted(self.station_percentiles.keys()):
+            p = self.station_percentiles[station]
+            print(f"{station:<15} | {p['p33']:<15.1f} | {p['p66']:<15.1f}")
+        print("=" * 50)
+
+        # Show sample station details
+        print(f"\n=== Sample Station Details ===")
         sample_station = list(self.data.keys())[0]
-        print(f"Sample station: {sample_station}")
+        print(f"Station: {sample_station}")
+        if sample_station in self.station_percentiles:
+            p = self.station_percentiles[sample_station]
+            print(f"  P33 (Low/Mid boundary): {p['p33']:.1f} people")
+            print(f"  P66 (Mid/High boundary): {p['p66']:.1f} people")
+            print(f"  Range: {p['min']:.1f} ~ {p['max']:.1f} people")
+
         sample_weekday = "2"  # Wednesday
         if sample_weekday in self.data[sample_station]:
-            print(f"Wednesday (weekday=2) data:")
-            for hour_str in ["0", "2", "8", "14", "20"]:
+            print(f"  Wednesday (weekday=2) sample hours:")
+            for hour_str in ["0", "2", "6", "8", "14", "20"]:
                 if hour_str in self.data[sample_station][sample_weekday]:
                     data = self.data[sample_station][sample_weekday][hour_str]
                     hour_int = int(hour_str)
-                    print(f"  {hour_int:02d}:00 - {data['people']:.1f} people (level: {data['level']})")
-        print(f"====================================\n")
+                    print(f"    {hour_int:02d}:00 - {data['people']:7.1f} people (level: {data['level']})")
+        print("=" * 50 + "\n")
 
         self.save_to_cache()
 
