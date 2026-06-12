@@ -27,9 +27,15 @@ wheels/
 backend/venv/
 backend/env/
 
-# Cache
-backend/cache/
+# Cache - except processed data
+backend/cache/*
+!backend/cache/congestion_data.json
+!backend/cache/version.txt
+
+# JSON files - except cache data
 *.json
+!backend/cache/congestion_data.json
+!backend/cache/version.txt
 
 # Node
 node_modules/
