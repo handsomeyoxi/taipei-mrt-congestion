@@ -6,10 +6,18 @@ import os
 
 app = FastAPI(title="台北捷運壅擠度預測 API")
 
-# 設定 CORS
+# 設定 CORS - 支持本地開發和線上部署
+allowed_origins = [
+    config.FRONTEND_URL,
+    "http://localhost:3000",
+    "http://localhost:5173",
+    "https://taipei-mrt-congestion.vercel.app",  # Vercel 前端
+    "*"  # 生產環境允許所有來源
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[config.FRONTEND_URL, "http://localhost:3000", "http://localhost:5173"],
+    allow_origins=allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
