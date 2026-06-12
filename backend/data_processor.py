@@ -8,16 +8,31 @@ from datetime import datetime
 
 os.makedirs(CACHE_DIR, exist_ok=True)
 
+# Cache version to force refresh when logic changes
+CACHE_VERSION = 2  # Increment to invalidate old caches
+
 class DataProcessor:
     def __init__(self):
         self.cache_file = os.path.join(CACHE_DIR, "congestion_data.json")
         self.stations_file = os.path.join(CACHE_DIR, "stations.json")
+        self.version_file = os.path.join(CACHE_DIR, "version.txt")
         self.data = {}
         self.station_percentiles = {}  # Store P33/P66 for each station
         self.load_from_cache()
 
     def load_from_cache(self):
         """From cache load data"""
+        # Check version first
+        if os.path.exists(self.version_file):
+            try:
+                with open(self.version_file, 'r', encoding='utf-8') as f:
+                    cached_version = int(f.read().strip())
+                if cached_version != CACHE_VERSION:
+                    print(f"[INFO] Cache version mismatch (cached: {cached_version}, current: {CACHE_VERSION}) - invalidating cache")
+                    return False
+            except:
+                pass
+
         if os.path.exists(self.cache_file):
             try:
                 with open(self.cache_file, 'r', encoding='utf-8') as f:
@@ -33,7 +48,10 @@ class DataProcessor:
         try:
             with open(self.cache_file, 'w', encoding='utf-8') as f:
                 json.dump(self.data, f, ensure_ascii=False, indent=2)
-            print(f"[OK] Data cached: {self.cache_file}")
+            # Save version file
+            with open(self.version_file, 'w', encoding='utf-8') as f:
+                f.write(str(CACHE_VERSION))
+            print(f"[OK] Data cached: {self.cache_file} (version {CACHE_VERSION})")
         except Exception as e:
             print(f"[ERROR] Cache save failed: {e}")
 
@@ -405,7 +423,7 @@ class DataProcessor:
         return result
 
     def get_daily_trend(self, station, weekday):
-        """取得該站全天 24 小時的壅擠趨勢"""
+        """取得該站全天 24 小時的壅擁趨勢"""
         if station not in self.data:
             return []
 
@@ -418,12 +436,22 @@ class DataProcessor:
         for hour in range(24):
             if str(hour) in hours:
                 data = hours[str(hour)]
-                trend.append({
-                    "hour": hour,
-                    "people": data['people'],
-                    "level": data['level'],
-                    "color": CONGESTION_LEVELS[data['level']]["color"]
-                })
+
+                # Force non-operating hours (0-5) to be marked as closed
+                if hour < 6:
+                    trend.append({
+                        "hour": hour,
+                        "people": 0,
+                        "level": "closed",
+                        "color": CONGESTION_LEVELS["closed"]["color"]
+                    })
+                else:
+                    trend.append({
+                        "hour": hour,
+                        "people": data['people'],
+                        "level": data['level'],
+                        "color": CONGESTION_LEVELS[data['level']]["color"]
+                    })
 
         return trend
 
