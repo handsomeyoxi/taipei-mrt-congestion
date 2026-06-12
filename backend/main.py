@@ -23,7 +23,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# 初始化資料：啟動時從網路下載最新資料
+# 初始化資料：優先使用 Git 中的預處理快取
 @app.on_event("startup")
 async def startup_event():
     """應用啟動時載入資料"""
@@ -31,14 +31,26 @@ async def startup_event():
         print("\n" + "="*60)
         print("Loading Taipei MRT Congestion Data...")
         print("="*60)
-        print("[INFO] Downloading index CSV from Taipei Open Data...")
 
-        # Always download from network - no local CSV dependency
-        processor.download_and_parse_data(months=3)
+        # Try to load from cache first (from Git or local)
+        print("[INFO] Attempting to load from cache...")
+        if processor.load_from_cache():
+            print("[OK] Successfully loaded from pre-processed cache")
+        else:
+            print("[WARN] Cache not found, attempting to download...")
+            # Fallback: download and process data if cache missing
+            try:
+                processor.download_and_parse_data(months=1)
+                print("[OK] Data downloaded and processed")
+            except Exception as e:
+                print(f"[ERROR] Failed to download data: {e}")
+                # Use sample data as last resort
+                processor._generate_sample_data()
+                print("[WARN] Using sample data as fallback")
 
         print("="*60 + "\n")
     else:
-        print("[OK] Cache loaded successfully")
+        print("[OK] Cache already loaded")
 
 
 @app.get("/")
