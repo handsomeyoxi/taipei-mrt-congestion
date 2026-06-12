@@ -13,7 +13,7 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 os.makedirs(CACHE_DIR, exist_ok=True)
 
 # Cache version to force refresh when logic changes
-CACHE_VERSION = 3  # Increment to invalidate old caches
+CACHE_VERSION = 4  # Increment to invalidate old caches
 
 class DataProcessor:
     def __init__(self):
@@ -58,6 +58,19 @@ class DataProcessor:
             print(f"[OK] Data cached: {self.cache_file} (version {CACHE_VERSION})")
         except Exception as e:
             print(f"[ERROR] Cache save failed: {e}")
+
+    def get_fixed_data_urls(self):
+        """Get fixed data URLs from Azure Blob Storage (hardcoded)"""
+        # Latest 3 months of data
+        urls = [
+            "http://tcgmetro.blob.core.windows.net/stationod/臺北捷運每日分時各站OD流量統計資料_202501.csv",
+            "http://tcgmetro.blob.core.windows.net/stationod/臺北捷運每日分時各站OD流量統計資料_202412.csv",
+            "http://tcgmetro.blob.core.windows.net/stationod/臺北捷運每日分時各站OD流量統計資料_202411.csv",
+        ]
+        print(f"[OK] Using fixed data URLs ({len(urls)} months):")
+        for url in urls:
+            print(f"     {url}")
+        return urls
 
     def fetch_index_csv_local(self, csv_path, months=3):
         """Get latest N months data URLs from local CSV"""
@@ -179,10 +192,10 @@ class DataProcessor:
             print(f"[INFO] Reading local index CSV: {csv_path}")
             urls = self.fetch_index_csv_local(csv_path, months=months)
 
-        # If no URLs yet, try to fetch from network
+        # If no URLs yet, use fixed URLs from Azure Blob Storage
         if urls is None or len(urls) == 0:
-            print(f"[INFO] Fetching index from Taipei Open Data API...")
-            urls = self.fetch_index_csv()
+            print(f"[INFO] Using fixed data URLs from Azure Blob Storage...")
+            urls = self.get_fixed_data_urls()
 
         # If still no URLs, use sample data as fallback
         if urls is None or len(urls) == 0:
