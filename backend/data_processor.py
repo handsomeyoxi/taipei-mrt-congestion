@@ -6,6 +6,10 @@ import numpy as np
 from config import CACHE_DIR, CONGESTION_LEVELS
 from datetime import datetime
 
+# Suppress SSL warnings when verify=False is used
+import urllib3
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+
 os.makedirs(CACHE_DIR, exist_ok=True)
 
 # Cache version to force refresh when logic changes
@@ -78,7 +82,8 @@ class DataProcessor:
         try:
             from config import INDEX_CSV_URL
             print(f"[INFO] Fetching from: {INDEX_CSV_URL}")
-            response = requests.get(INDEX_CSV_URL, timeout=30)
+            # Skip SSL verification for data.taipei API
+            response = requests.get(INDEX_CSV_URL, timeout=30, verify=False)
             response.encoding = 'utf-8'
 
             # Parse JSON response - handle multiple API formats
@@ -142,7 +147,8 @@ class DataProcessor:
         for i, url in enumerate(urls, 1):
             try:
                 print(f"[{i}/{len(urls)}] Downloading: {url[-30:]}")
-                response = requests.get(url, timeout=30)
+                # Skip SSL verification for data.taipei downloads
+                response = requests.get(url, timeout=30, verify=False)
                 response.encoding = 'utf-8'
                 df = pd.read_csv(pd.io.common.StringIO(response.text))
                 all_data.append(df)
