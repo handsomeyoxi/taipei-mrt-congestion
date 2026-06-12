@@ -308,7 +308,7 @@ class DataProcessor:
                 "level": "closed",
                 "color": "#999999",
                 "label": "未營運",
-                "suggestion": "MRT is not operating (06:00-23:59)",
+                "suggestion": "捷運未營運（營運時間 06:00-23:59）",
                 "is_operating": False
             }
 
@@ -325,17 +325,17 @@ class DataProcessor:
         }
 
     def _get_suggestion(self, level):
-        """Get suggestion based on congestion level"""
+        """依照壅擠程度回傳建議"""
         suggestions = {
-            "low": "Comfortable! You can board now",
-            "medium": "Moderate crowding, consider another time",
-            "high": "Very crowded, recommend choosing another time",
-            "closed": "MRT is not operating (06:00-23:59 operation hours)"
+            "low": "舒適！現在可以搭乘",
+            "medium": "中等壅擠，建議考慮其他時段",
+            "high": "非常擁擠，建議選擇其他時段搭乘",
+            "closed": "捷運未營運（營運時間 06:00-23:59）"
         }
         return suggestions.get(level, "")
 
-    def get_best_times(self, station, weekday, top_n=3):
-        """取得該站當天最不擠的時段"""
+    def get_best_times(self, station, weekday, hour=None, top_n=3):
+        """取得該站當天最不擠的時段，或指定時段前後2小時內最不擠的時段"""
         if station not in self.data:
             return []
 
@@ -344,16 +344,32 @@ class DataProcessor:
 
         hours = self.data[station][str(weekday)]
 
+        # 決定時段範圍（營運時間 06:00-23:59）
+        if hour is not None:
+            # 前後2小時範圍，但限制在營運時間內
+            start_hour = max(6, hour - 2)
+            end_hour = min(23, hour + 2)
+            hour_range = set(range(start_hour, end_hour + 1))
+        else:
+            # 全天營運時間
+            hour_range = set(range(6, 24))
+
+        # 篩選時段範圍內且非未營運的時段
+        filtered_hours = [
+            (int(h_str), data) for h_str, data in hours.items()
+            if int(h_str) in hour_range and data['level'] != 'closed'
+        ]
+
         # 按人次排序，取最少的時段
         sorted_hours = sorted(
-            hours.items(),
+            filtered_hours,
             key=lambda x: x[1]['people']
         )
 
         result = []
-        for hour_str, data in sorted_hours[:top_n]:
+        for hour_int, data in sorted_hours[:top_n]:
             result.append({
-                "hour": int(hour_str),
+                "hour": hour_int,
                 "people": data['people'],
                 "level": data['level'],
                 "label": CONGESTION_LEVELS[data['level']]["label"]

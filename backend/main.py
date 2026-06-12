@@ -82,17 +82,21 @@ async def get_congestion(station: str, hour: int, weekday: int):
 
 
 @app.get("/best-time")
-async def get_best_time(station: str, weekday: int):
+async def get_best_time(station: str, weekday: int, hour: int = None):
     """
-    查詢該站點當天最不擠的時段
+    查詢該站點當天或指定時段前後最不擠的時段
 
     - station: 站點名稱
     - weekday: 星期 0-6
+    - hour: 可選，指定的小時（0-23），將推薦該時段前後2小時內最不擠的3個時段
     """
     if not station or weekday < 0 or weekday > 6:
         raise HTTPException(status_code=400, detail="參數無效")
 
-    result = processor.get_best_times(station, weekday, top_n=3)
+    if hour is not None and (hour < 0 or hour > 23):
+        raise HTTPException(status_code=400, detail="小時參數無效")
+
+    result = processor.get_best_times(station, weekday, hour=hour, top_n=3)
     if not result:
         raise HTTPException(status_code=404, detail="找不到該站點資料")
 
@@ -101,6 +105,7 @@ async def get_best_time(station: str, weekday: int):
         "station": station,
         "weekday": weekday,
         "weekday_name": weekdays[weekday],
+        "hour": hour,
         "best_times": result
     }
 

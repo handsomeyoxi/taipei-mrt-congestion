@@ -59,7 +59,8 @@ function App() {
         axios.get(`${API_BASE}/best-time`, {
           params: {
             station: selectedStation,
-            weekday: selectedWeekday
+            weekday: selectedWeekday,
+            hour: selectedHour
           }
         }),
         axios.get(`${API_BASE}/trend`, {
