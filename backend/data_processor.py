@@ -13,7 +13,7 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 os.makedirs(CACHE_DIR, exist_ok=True)
 
 # Cache version to force refresh when logic changes
-CACHE_VERSION = 4  # Increment to invalidate old caches
+CACHE_VERSION = 5  # Increment to invalidate old caches
 
 class DataProcessor:
     def __init__(self):
@@ -60,14 +60,12 @@ class DataProcessor:
             print(f"[ERROR] Cache save failed: {e}")
 
     def get_fixed_data_urls(self):
-        """Get fixed data URLs from Azure Blob Storage (hardcoded)"""
-        # Latest 3 months of data
+        """Get fixed data URL from Azure Blob Storage (latest month only for low memory)"""
+        # Only latest month to fit in Render free tier (512MB RAM)
         urls = [
             "http://tcgmetro.blob.core.windows.net/stationod/臺北捷運每日分時各站OD流量統計資料_202501.csv",
-            "http://tcgmetro.blob.core.windows.net/stationod/臺北捷運每日分時各站OD流量統計資料_202412.csv",
-            "http://tcgmetro.blob.core.windows.net/stationod/臺北捷運每日分時各站OD流量統計資料_202411.csv",
         ]
-        print(f"[OK] Using fixed data URLs ({len(urls)} months):")
+        print(f"[OK] Using fixed data URLs ({len(urls)} month) - optimized for low memory:")
         for url in urls:
             print(f"     {url}")
         return urls
@@ -206,19 +204,40 @@ class DataProcessor:
         all_data = []
         for i, url in enumerate(urls, 1):
             try:
-                print(f"[{i}/{len(urls)}] Downloading: {url[-30:]}")
-                # Skip SSL verification for data.taipei downloads
-                response = requests.get(url, timeout=30, verify=False)
+                print(f"[{i}/{len(urls)}] Streaming: {url[-30:]}")
+                # Stream the CSV data to minimize memory usage
+                # Skip SSL verification
+                response = requests.get(url, timeout=60, verify=False, stream=True)
                 response.encoding = 'utf-8'
-                df = pd.read_csv(pd.io.common.StringIO(response.text))
-                all_data.append(df)
-                print(f"     [OK] Parsed {len(df):,} records")
+
+                # Read CSV in chunks to avoid loading entire file in memory
+                import io
+                chunks = []
+                chunk_count = 0
+                chunk_size = 50000  # Process 50k rows at a time
+
+                for chunk in pd.read_csv(io.BytesIO(response.content),
+                                         chunksize=chunk_size,
+                                         dtype={'人次': 'int32', '日期': 'str', '時段': 'int16'}):
+                    chunks.append(chunk)
+                    chunk_count += 1
+                    if chunk_count % 10 == 0:
+                        print(f"     Processing chunk {chunk_count}...")
+
+                if chunks:
+                    df = pd.concat(chunks, ignore_index=True)
+                    all_data.append(df)
+                    print(f"     [OK] Streamed {len(df):,} records in {chunk_count} chunks")
+
             except Exception as e:
-                print(f"     [ERROR] Download failed: {str(e)[:50]}")
+                print(f"     [ERROR] Download failed: {str(e)[:80]}")
+                import traceback
+                traceback.print_exc()
 
         if all_data:
+            print(f"[INFO] Concatenating {len(all_data)} files...")
             combined_df = pd.concat(all_data, ignore_index=True)
-            print(f"[OK] Merged data: {len(combined_df):,} total records")
+            print(f"[OK] Total data: {len(combined_df):,} records")
             print(f"\n=== Data Diagnostics ===")
             print(f"Columns: {list(combined_df.columns)}")
             print(f"Date range: {combined_df['日期'].min()} to {combined_df['日期'].max()}")
@@ -235,15 +254,14 @@ class DataProcessor:
             self._generate_sample_data()
 
     def process_dataframes(self, df):
-        """Process DataFrame and calculate statistics"""
+        """Process DataFrame and calculate statistics - optimized for low memory"""
         # Ensure column names are clean and handle BOM
         df.columns = df.columns.str.strip()
         df.columns = [col.replace('﻿', '') for col in df.columns]  # Remove BOM
 
-        print(f"\n=== After BOM removal ===")
-        print(f"Column names: {list(df.columns)}")
-        print(f"Sample row: {df.iloc[0].to_dict()}")
-        print(f"============================\n")
+        print(f"\n=== Processing Data ===")
+        print(f"Columns: {list(df.columns)}")
+        print(f"Memory usage: {df.memory_usage(deep=True).sum() / 1024**2:.2f} MB")
 
         # Parse date - handle both formats (YYYYMMDD and YYYY-MM-DD)
         try:
@@ -254,17 +272,34 @@ class DataProcessor:
             except:
                 df['日期'] = pd.to_datetime(df['日期'], format='mixed')
 
-        df['weekday'] = df['日期'].dt.weekday
-        df['時段'] = df['時段'].astype(int)
+        # Convert to int16 to save memory (weekday only needs 0-6)
+        df['weekday'] = df['日期'].dt.weekday.astype('int8')
+        df['時段'] = df['時段'].astype('int8')
+
+        # Keep only needed columns to save memory
+        df = df[['進站', '時段', 'weekday', '日期', '人次']]
+
+        print(f"After optimization: {df.memory_usage(deep=True).sum() / 1024**2:.2f} MB\n")
 
         # Group by [station, hour, weekday]
         # First: sum all destinations for each station/hour/weekday/date
+        print("[INFO] Grouping by station/hour/weekday/date...")
         daily = df.groupby(['進站', '時段', 'weekday', '日期'])['人次'].sum().reset_index()
         daily.columns = ['station', 'hour', 'weekday', 'date', 'daily_total']
 
+        # Delete original df to free memory
+        del df
+        import gc
+        gc.collect()
+
         # Second: average across all dates
+        print("[INFO] Calculating daily averages...")
         grouped = daily.groupby(['station', 'hour', 'weekday'])['daily_total'].mean().reset_index()
         grouped.columns = ['station', 'hour', 'weekday', 'avg_people']
+
+        # Delete daily to free memory
+        del daily
+        gc.collect()
 
         # MRT operating hours: 06:00-23:59 (hours 6-23)
         MRT_OPERATING_HOURS = set(range(6, 24))
