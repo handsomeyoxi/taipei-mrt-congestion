@@ -42,6 +42,38 @@
   grid-column: span 2;
 }
 
+.time-range-selector {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.time-range-btn {
+  flex: 1;
+  padding: 12px 15px;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  background-color: white;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  color: #666;
+}
+
+.time-range-btn:hover {
+  border-color: #667eea;
+  color: #667eea;
+  background-color: #f5f7ff;
+}
+
+.time-range-btn.active {
+  background-color: #667eea;
+  border-color: #667eea;
+  color: white;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
 @media (max-width: 768px) {
   .selector-container {
     grid-template-columns: 1fr;

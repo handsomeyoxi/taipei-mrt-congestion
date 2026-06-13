@@ -9,6 +9,8 @@ function StationSelector({
   onWeekdayChange,
   selectedHour,
   onHourChange,
+  selectedTimeRange,
+  onTimeRangeChange,
   weekdayNames
 }) {
   const hours = Array.from({ length: 24 }, (_, i) => i);
@@ -59,6 +61,22 @@ function StationSelector({
             </option>
           ))}
         </select>
+      </div>
+
+      <div className="selector-group">
+        <label>推薦時間範圍</label>
+        <div className="time-range-selector">
+          {[1, 2, 3].map((range) => (
+            <button
+              key={range}
+              className={`time-range-btn ${selectedTimeRange === range ? 'active' : ''}`}
+              onClick={() => onTimeRangeChange(range)}
+              title={`顯示當前時段前後 ${range} 小時內最不擁擠的時段`}
+            >
+              ±{range}h
+            </button>
+          ))}
+        </div>
       </div>
     </div>
   );

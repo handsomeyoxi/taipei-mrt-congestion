@@ -511,8 +511,16 @@ class DataProcessor:
         }
         return suggestions.get(level, "")
 
-    def get_best_times(self, station, weekday, hour=None, top_n=3):
-        """取得該站當天最不擠的時段，或指定時段前後2小時內最不擠的時段"""
+    def get_best_times(self, station, weekday, hour=None, time_range=2, top_n=3):
+        """取得該站當天最不擠的時段，或指定時段前後N小時內最不擠的時段
+
+        Args:
+            station: 站點名稱
+            weekday: 星期幾 (0-6)
+            hour: 可選，指定的小時 (0-23)
+            time_range: 時間範圍 (小時數)，預設 2，可選 1 或 3
+            top_n: 返回前 N 個最不擠的時段，預設 3
+        """
         if station not in self.data:
             return []
 
@@ -523,9 +531,9 @@ class DataProcessor:
 
         # 決定時段範圍（營運時間 06:00-23:59）
         if hour is not None:
-            # 前後2小時範圍，但限制在營運時間內
-            start_hour = max(6, hour - 2)
-            end_hour = min(23, hour + 2)
+            # 前後 N 小時範圍，但限制在營運時間內
+            start_hour = max(6, hour - time_range)
+            end_hour = min(23, hour + time_range)
             hour_range = set(range(start_hour, end_hour + 1))
         else:
             # 全天營運時間

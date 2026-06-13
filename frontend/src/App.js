@@ -12,6 +12,7 @@ function App() {
   const [selectedStation, setSelectedStation] = useState('');
   const [selectedHour, setSelectedHour] = useState(8);
   const [selectedWeekday, setSelectedWeekday] = useState(0);
+  const [selectedTimeRange, setSelectedTimeRange] = useState(2);
   const [congestion, setCongestion] = useState(null);
   const [bestTimes, setBestTimes] = useState([]);
   const [trendData, setTrendData] = useState([]);
@@ -60,7 +61,8 @@ function App() {
           params: {
             station: selectedStation,
             weekday: selectedWeekday,
-            hour: selectedHour
+            hour: selectedHour,
+            time_range: selectedTimeRange
           }
         }),
         axios.get(`${API_BASE}/trend`, {
@@ -82,12 +84,12 @@ function App() {
     }
   };
 
-  // 當站點、時段或星期幾改變時自動查詢
+  // 當站點、時段、星期幾或時間範圍改變時自動查詢
   useEffect(() => {
     if (selectedStation) {
       handleQuery();
     }
-  }, [selectedStation, selectedHour, selectedWeekday]);
+  }, [selectedStation, selectedHour, selectedWeekday, selectedTimeRange]);
 
   return (
     <div className="app">
@@ -106,6 +108,8 @@ function App() {
             onWeekdayChange={setSelectedWeekday}
             selectedHour={selectedHour}
             onHourChange={setSelectedHour}
+            selectedTimeRange={selectedTimeRange}
+            onTimeRangeChange={setSelectedTimeRange}
             weekdayNames={weekdayNames}
           />
         </div>
