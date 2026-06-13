@@ -58,15 +58,15 @@ function CongestionChart({ data, station, weekday }) {
       <div className="chart-legend">
         <div className="legend-item">
           <div className="legend-color" style={{ backgroundColor: '#22c55e' }}></div>
-          <span>低壅擠</span>
+          <span>低擁擠</span>
         </div>
         <div className="legend-item">
           <div className="legend-color" style={{ backgroundColor: '#eab308' }}></div>
-          <span>中壅擠</span>
+          <span>中擁擠</span>
         </div>
         <div className="legend-item">
           <div className="legend-color" style={{ backgroundColor: '#ef4444' }}></div>
-          <span>高壅擠</span>
+          <span>高擁擠</span>
         </div>
         <div className="legend-item">
           <div className="legend-color" style={{ backgroundColor: '#cccccc' }}></div>

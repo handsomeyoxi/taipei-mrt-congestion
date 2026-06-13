@@ -18,7 +18,7 @@ function CongestionDisplay({ congestion, weekdayName, bestTimes, weekdayNames })
 
   return (
     <div className="congestion-container">
-      {/* 主壅擠程度顯示 */}
+      {/* 主擁擠程度顯示 */}
       <div className="congestion-main-card">
         <div className="congestion-info">
           <h2>{congestion.station}</h2>
@@ -32,7 +32,7 @@ function CongestionDisplay({ congestion, weekdayName, bestTimes, weekdayNames })
           style={{ backgroundColor: colorMap[congestion.color] }}
         >
           <div className="congestion-level">{labelMap[congestion.level]}</div>
-          <div className="congestion-label">壅擠度</div>
+          <div className="congestion-label">擁擠度</div>
         </div>
 
         <div className="congestion-stats">

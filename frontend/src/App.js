@@ -37,7 +37,7 @@ function App() {
     fetchStations();
   }, []);
 
-  // 查詢壅擠度和建議時段
+  // 查詢擁擠度和建議時段
   const handleQuery = async () => {
     if (!selectedStation) {
       setError('請選擇車站');
@@ -92,7 +92,7 @@ function App() {
   return (
     <div className="app">
       <header className="header">
-        <h1>🚇 台北捷運壅擠度預測</h1>
+        <h1>🚇 台北捷運擁擠度預測</h1>
         <p>找到最舒適的搭車時間</p>
       </header>
 
