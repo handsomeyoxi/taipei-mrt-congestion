@@ -52,7 +52,7 @@ function CongestionDisplay({ congestion, weekdayName, bestTimes, weekdayNames })
       {bestTimes.length > 0 && (
         <div className="best-times-card">
           <h3>✨ 推薦搭車時段 ({weekdayName})</h3>
-          <p className="subtitle">當天最不擁擠的3個時段</p>
+          <p className="subtitle">鄰近時段中較不擁擠的推薦</p>
 
           <div className="best-times-list">
             {bestTimes.map((time, index) => (
