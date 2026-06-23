@@ -120,7 +120,16 @@ class DataProcessor:
                 with open(self.cache_file, 'r', encoding='utf-8') as f:
                     self.data = json.load(f)
                 self.data_initialized = True
-                print(f"[OK] Cache loaded: {len(self.data)} stations (lazy loading)")
+
+                # Validate yellow line stations count - must have at least 21 stations
+                yellow_stations = [s for s in self.data.keys() if s.startswith('Y')]
+                yellow_count = len(yellow_stations)
+
+                if yellow_count < 21:
+                    print(f"[WARN] Invalid cache: Yellow line has only {yellow_count} stations (expected 21) - invalidating cache")
+                    return False
+
+                print(f"[OK] Cache loaded: {len(self.data)} stations with {yellow_count} yellow line stations (lazy loading)")
                 return True
             except Exception as e:
                 print(f"[WARN] Cache read failed: {e}")
