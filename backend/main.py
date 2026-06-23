@@ -37,16 +37,11 @@ async def startup_event():
         if processor.load_from_cache():
             print("[OK] Successfully loaded from pre-processed cache")
         else:
-            print("[WARN] Cache not found, attempting to download...")
-            # Fallback: download and process data if cache missing
-            try:
-                processor.download_and_parse_data(months=1)
-                print("[OK] Data downloaded and processed")
-            except Exception as e:
-                print(f"[ERROR] Failed to download data: {e}")
-                # Use sample data as last resort
-                processor._generate_sample_data()
-                print("[WARN] Using sample data as fallback")
+            print("[WARN] Cache not found, using lightweight lazy loading...")
+            # For memory-constrained environments (e.g., Render free tier),
+            # initialize with lazy loading instead of pre-loading everything
+            processor._generate_sample_data()
+            print("[WARN] Initialized with lazy loading - data generated on-demand")
 
         print("="*60 + "\n")
     else:

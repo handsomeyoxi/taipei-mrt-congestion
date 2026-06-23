@@ -13,7 +13,7 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 os.makedirs(CACHE_DIR, exist_ok=True)
 
 # Cache version to force refresh when logic changes
-CACHE_VERSION = 13  # Increment to invalidate old caches
+CACHE_VERSION = 14  # Increment to invalidate old caches (lazy loading)
 
 # MRT Line Mapping - 硬編碼每條線的所有站點
 STATION_LINE_MAPPING = {}
@@ -82,6 +82,7 @@ class DataProcessor:
         self.version_file = os.path.join(CACHE_DIR, "version.txt")
         self.data = {}
         self.station_percentiles = {}  # Store P33/P66 for each station
+        self.data_initialized = False  # Flag for lazy loading
         self.load_from_cache()
 
     def get_station_with_line_code(self, station_name):
@@ -118,7 +119,8 @@ class DataProcessor:
             try:
                 with open(self.cache_file, 'r', encoding='utf-8') as f:
                     self.data = json.load(f)
-                print(f"[OK] Cache loaded: {len(self.data)} stations")
+                self.data_initialized = True
+                print(f"[OK] Cache loaded: {len(self.data)} stations (lazy loading)")
                 return True
             except Exception as e:
                 print(f"[WARN] Cache read failed: {e}")
@@ -504,39 +506,56 @@ class DataProcessor:
         self.save_to_cache()
 
     def _generate_sample_data(self):
-        """生成示例資料供開發測試 - 包含所有線路的所有站點"""
+        """輕量級初始化 - 只初始化站點清單，數據按需生成（Lazy Loading）"""
         # 使用所有定義的站點
         all_stations = list(STATION_LINE_MAPPING.keys())
 
         self.data = {}
+        # 只存儲站點基本資訊，不預先生成所有時間數據
         for station in all_stations:
-            station_dict = {}
-            for weekday in range(7):
-                hours = {}
-                # 模擬高峰期（7-9點, 17-19點）和低峰期
-                for hour in range(24):
-                    if hour in [7, 8, 9, 17, 18, 19]:
-                        people = 3000 + np.random.randint(-500, 500)
-                        level = "high"
-                    elif hour in [10, 11, 14, 15, 16, 20, 21, 22]:
-                        people = 1500 + np.random.randint(-300, 300)
-                        level = "medium"
-                    else:
-                        people = 500 + np.random.randint(-100, 100)
-                        level = "low"
-
-                    hours[str(hour)] = {
-                        "people": round(max(0, people), 1),
-                        "level": level
-                    }
-                station_dict[str(weekday)] = hours
-
-            # Add line code prefix to station name
             station_with_code = self.get_station_with_line_code(station)
-            self.data[station_with_code] = station_dict
+            # 僅存儲空字典，表示該站點存在但數據未載入
+            self.data[station_with_code] = {}
+            # 設置一個標記表示該站點需要動態生成數據
+            self.data[station_with_code]['_needs_generation'] = True
 
-        print(f"[OK] Generated {len(self.data)} sample stations")
+        self.data_initialized = True
+        print(f"[OK] Initialized {len(self.data)} stations for lazy loading")
         self.save_to_cache()
+
+    def _generate_station_data(self, station_with_code):
+        """動態生成單個站點的時間序列數據（Lazy Loading）"""
+        if station_with_code not in self.data:
+            return False
+
+        # 檢查是否已生成
+        if '_needs_generation' not in self.data[station_with_code]:
+            return True  # 已生成
+
+        station_dict = {}
+        for weekday in range(7):
+            hours = {}
+            # 模擬高峰期（7-9點, 17-19點）和低峰期
+            for hour in range(24):
+                if hour in [7, 8, 9, 17, 18, 19]:
+                    people = 3000 + np.random.randint(-500, 500)
+                    level = "high"
+                elif hour in [10, 11, 14, 15, 16, 20, 21, 22]:
+                    people = 1500 + np.random.randint(-300, 300)
+                    level = "medium"
+                else:
+                    people = 500 + np.random.randint(-100, 100)
+                    level = "low"
+
+                hours[str(hour)] = {
+                    "people": round(max(0, people), 1),
+                    "level": level
+                }
+            station_dict[str(weekday)] = hours
+
+        # 更新該站點的數據
+        self.data[station_with_code] = station_dict
+        return True
 
     def get_stations(self):
         """取得所有站點列表"""
@@ -546,6 +565,10 @@ class DataProcessor:
         """取得特定站點、時段、星期幾的壅擠程度"""
         if station not in self.data:
             return None
+
+        # Lazy loading: 如果該站點未生成數據，動態生成
+        if '_needs_generation' in self.data[station]:
+            self._generate_station_data(station)
 
         if str(weekday) not in self.data[station]:
             return None
@@ -605,6 +628,10 @@ class DataProcessor:
         if station not in self.data:
             return []
 
+        # Lazy loading: 如果該站點未生成數據，動態生成
+        if '_needs_generation' in self.data[station]:
+            self._generate_station_data(station)
+
         if str(weekday) not in self.data[station]:
             return []
 
@@ -647,6 +674,10 @@ class DataProcessor:
         """取得該站全天 24 小時的壅擁趨勢"""
         if station not in self.data:
             return []
+
+        # Lazy loading: 如果該站點未生成數據，動態生成
+        if '_needs_generation' in self.data[station]:
+            self._generate_station_data(station)
 
         if str(weekday) not in self.data[station]:
             return []
