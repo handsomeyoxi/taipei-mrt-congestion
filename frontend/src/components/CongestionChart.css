@@ -145,28 +145,96 @@
 }
 
 @media (max-width: 768px) {
+  .chart-card {
+    padding: 16px 12px;
+  }
+
+  .chart-card h3 {
+    font-size: 1.1rem;
+    margin-bottom: 15px;
+  }
+
   .chart-wrapper {
-    height: 300px;
+    height: 280px;
+    gap: 8px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
   }
 
   .y-axis {
-    width: 50px;
+    width: 40px;
+    padding-right: 8px;
+    flex-shrink: 0;
+  }
+
+  .y-label {
+    font-size: 0.7rem;
+  }
+
+  .bars-container {
+    gap: 4px;
+    padding: 8px;
+    min-width: min-content;
   }
 
   .bar-wrapper {
-    max-width: 25px;
+    min-width: 18px;
+    max-width: 18px;
   }
 
   .bar-label {
-    font-size: 0.65rem;
+    font-size: 0.6rem;
+    margin-top: 6px;
   }
 
   .chart-legend {
     flex-wrap: wrap;
-    gap: 15px;
+    gap: 12px;
+    justify-content: flex-start;
   }
 
+  .legend-item span {
+    font-size: 0.85rem;
+  }
+}
+
+@media (max-width: 480px) {
   .chart-card {
-    padding: 20px;
+    padding: 12px 8px;
+  }
+
+  .chart-card h3 {
+    font-size: 0.95rem;
+    margin-bottom: 12px;
+  }
+
+  .chart-wrapper {
+    height: 250px;
+    gap: 6px;
+  }
+
+  .y-axis {
+    width: 35px;
+    padding-right: 6px;
+  }
+
+  .y-label {
+    font-size: 0.65rem;
+  }
+
+  .bars-container {
+    gap: 3px;
+    padding: 6px;
+  }
+
+  .bar-wrapper {
+    min-width: 16px;
+    max-width: 16px;
+  }
+
+  .bar-label {
+    font-size: 0.55rem;
+    margin-top: 4px;
   }
 }
