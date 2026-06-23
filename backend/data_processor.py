@@ -514,13 +514,12 @@ class DataProcessor:
         # 只存儲站點基本資訊，不預先生成所有時間數據
         for station in all_stations:
             station_with_code = self.get_station_with_line_code(station)
-            # 僅存儲空字典，表示該站點存在但數據未載入
-            self.data[station_with_code] = {}
-            # 設置一個標記表示該站點需要動態生成數據
-            self.data[station_with_code]['_needs_generation'] = True
+            # 為每個站點存儲一個標記，表示需要動態生成數據
+            # 使用特殊的佔位符結構確保 station_with_code 能被正確返回
+            self.data[station_with_code] = {'_needs_generation': True}
 
         self.data_initialized = True
-        print(f"[OK] Initialized {len(self.data)} stations for lazy loading")
+        print(f"[OK] Initialized {len(self.data)} stations for lazy loading (黃線 {len([s for s in self.data.keys() if s.startswith('Y')])} 站)")
         self.save_to_cache()
 
     def _generate_station_data(self, station_with_code):
