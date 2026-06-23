@@ -13,61 +13,55 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 os.makedirs(CACHE_DIR, exist_ok=True)
 
 # Cache version to force refresh when logic changes
-CACHE_VERSION = 7  # Increment to invalidate old caches
+CACHE_VERSION = 8  # Increment to invalidate old caches
 
-# MRT Line Mapping - 根據台北捷運官方站點列表 (119個站點)
-# 每個站點只被分配給一條主線路 (優先級: 轉乘站分配給該線)
-STATION_LINE_MAPPING = {
-    # 文湖線 (BR - Brown Line)
-    '南港軟體園區': 'BR', '南港': 'BR', '後山埤': 'BR', '松山': 'BR',
-    '南京三民': 'BR', '中山國小': 'BR', '大直': 'BR', '劍南路': 'BR',
-    '西湖': 'BR', '港墘': 'BR', '內湖': 'BR', '東湖': 'BR',
-    '南港展覽館': 'BR', '復興崗': 'BR', '木柵': 'BR', '麟光': 'BR',
-    '動物園': 'BR',
+# MRT Line Mapping - 硬編碼每條線的所有站點
+STATION_LINE_MAPPING = {}
 
-    # 淡水信義線 (R - Red Line)
-    '淡水': 'R', '竹圍': 'R', '紅樹林': 'R', '北投': 'R', '新北投': 'R',
-    '奇岩': 'R', '唭哩岸': 'R', '石牌': 'R', '芝山': 'R', '士林': 'R',
-    '北門': 'R', '中山': 'R', '南京復興': 'R', '松江南京': 'R',
-    '忠孝新生': 'R', '忠孝復興': 'R', '忠孝敦化': 'R', '市政府': 'R',
-    '永春': 'R', '台北101/世貿': 'R', '信義安和': 'R', '象山': 'R',
-    '關渡': 'R', '行天宮': 'R', '雙連': 'R',
+# 文湖線（棕線）BR - 24個站點
+BR_STATIONS = ['動物園', '木柵', '萬芳社區', '萬芳醫院', '辛亥', '麟光', '六張犁', '科技大樓',
+               '大安', '忠孝復興', '南京復興', '中山國中', '松山機場', '大直', '劍南路', '西湖',
+               '港墘', '文德', '內湖', '大湖公園', '葫洲', '東湖', '南港軟體園區', '南港展覽館']
 
-    # 松山新店線 (G - Green Line)
-    '新店': 'G', '新店區公所': 'G', '七張': 'G', '小碧潭': 'G',
-    '景美': 'G', '景平': 'G', '景安': 'G', '南勢角': 'G',
-    '古亭': 'G', '台大醫院': 'G', '台北車站': 'G', '中正紀念堂': 'G',
-    '東門': 'G', '民權西路': 'G', '善導寺': 'G', '台電大樓': 'G',
-    '公館': 'G', '萬隆': 'G', '辛亥': 'G',
+# 淡水信義線（紅線）R - 27個站點
+R_STATIONS = ['象山', '台北101/世貿', '信義安和', '大安', '大安森林公園', '東門', '中正紀念堂',
+              '台大醫院', '台北車站', '中山', '雙連', '民權西路', '圓山', '劍潭', '士林', '芝山',
+              '明德', '石牌', '唭哩岸', '奇岩', '北投', '新北投', '復興崗', '忠義', '關渡', '竹圍',
+              '紅樹林', '淡水']
 
-    # 中和新蘆線 (O - Orange Line)
-    '蘆洲': 'O', '三民高中': 'O', '三和國中': 'O', '先嗇宮': 'O',
-    '頭前庄': 'O', '新莊': 'O', '迴龍': 'O', '輔大': 'O',
-    '西門': 'O', '龍山寺': 'O', '江南': 'O', '中和': 'O',
-    '頂溪': 'O', '頂埔': 'O', '永寧': 'O', '永安市場': 'O',
-    '新埔民生': 'O', '新埔': 'O', '土城': 'O', '海山': 'O',
-    '亞東醫院': 'O',
+# 松山新店線（綠線）G - 15個站點
+G_STATIONS = ['松山', '南京三民', '台北小巨蛋', '南京復興', '忠孝新生', '古亭', '台電大樓', '公館',
+              '萬隆', '景美', '大坪林', '七張', '新店區公所', '新店', '小碧潭']
 
-    # 板南線 (BL - Blue Line)
-    '昆陽': 'BL', '台北': 'BL', '小南門': 'BL',
-    '三重國小': 'BL', '三重': 'BL', '台北橋': 'BL', '府中': 'BL',
-    '板新': 'BL', '板橋': 'BL',
+# 中和新蘆線（橘線）O - 25個站點
+O_STATIONS = ['蘆洲', '三和國中', '三重國小', '先嗇宮', '頭前庄', '新莊', '輔大', '新埔民生', '丹鳳',
+              '迴龍', '三重', '菜寮', '台北橋', '大橋頭', '民權西路', '中山國小', '行天宮', '松江南京',
+              '忠孝新生', '東門', '古亭', '頂溪', '永安市場', '景安', '南勢角']
 
-    # 環狀線 (Y - Yellow Line)
-    '葫洲': 'Y', '大湖公園': 'Y',
-    '忠孝新生': 'Y', '忠孝復興': 'Y', '忠孝敦化': 'Y',
-    '南京復興': 'Y', '松江南京': 'Y',
-    '中正紀念堂': 'Y',
+# 板南線（藍線）BL - 22個站點
+BL_STATIONS = ['頂埔', '永寧', '土城', '海山', '亞東醫院', '府中', '板橋', '新埔', '江子翠',
+               '龍山寺', '西門', '台北車站', '善導寺', '忠孝新生', '忠孝復興', '忠孝敦化', '國父紀念館',
+               '市政府', '永春', '後山埤', '昆陽', '南港']
 
-    # 其他站點（補充缺失的）
-    '中山國中': 'R', '中山國小': 'BR', '丹鳳': 'O', '六張犁': 'BR',
-    '十四張': 'G', '國父紀念館': 'R', '圓山': 'R', '大坪林': 'G',
-    '大安': 'R', '大安森林公園': 'G', '大橋頭站': 'O', '台北小巨蛋': 'R',
-    '徐匯中學': 'G', '忠義': 'O', '文德': 'BR', '新北產業園區': 'Y',
-    '昭和': 'BR', '劇場': 'R', '江子翠': 'O', '秀朗橋': 'G',
-    '科技大樓': 'G', '菜寮': 'O', '松山機場': 'R', '橋和': 'BL',
-    '幸福': 'O', '萬芳社區': 'G', '萬芳醫院': 'G',
-}
+# 環狀線（黃線）Y - 30個站點
+Y_STATIONS = ['新北產業園區', '幸福', '頭前庄', '新莊', '丹鳳', '輔大', '新埔', '迴龍', '中原',
+              '板橋', '新埔民生', '三重', '菜寮', '台北橋', '大橋頭', '民權西路', '中山國小', '行天宮',
+              '松江南京', '忠孝新生', '東門', '古亭', '頂溪', '永安市場', '景安', '南勢角', '板新',
+              '中正紀念堂', '南港展覽館', '南港']
+
+# 建立映射 (後面的站點優先級更高，用於轉乘站)
+for station in BR_STATIONS:
+    STATION_LINE_MAPPING[station] = 'BR'
+for station in R_STATIONS:
+    STATION_LINE_MAPPING[station] = 'R'
+for station in G_STATIONS:
+    STATION_LINE_MAPPING[station] = 'G'
+for station in O_STATIONS:
+    STATION_LINE_MAPPING[station] = 'O'
+for station in BL_STATIONS:
+    STATION_LINE_MAPPING[station] = 'BL'
+for station in Y_STATIONS:
+    STATION_LINE_MAPPING[station] = 'Y'
 
 class DataProcessor:
     def __init__(self):
@@ -79,19 +73,11 @@ class DataProcessor:
         self.load_from_cache()
 
     def get_station_with_line_code(self, station_name):
-        """Get station name with line code prefix"""
-        # Handle stations without prefix
-        if station_name == '中原':
-            return 'R中原'
-        elif station_name == '劍潭':
-            return 'R劍潭'
-        elif station_name == '明德':
-            return 'O明德'
-
+        """Get station name with line code prefix based on hardcoded mapping"""
         if station_name in STATION_LINE_MAPPING:
             line_code = STATION_LINE_MAPPING[station_name]
             return f"{line_code}{station_name}"
-        # If station not in mapping, return as is
+        # If station not in mapping, return as is (shouldn't happen)
         return station_name
 
     def load_from_cache(self):
