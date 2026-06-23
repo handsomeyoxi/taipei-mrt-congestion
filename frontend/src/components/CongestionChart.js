@@ -9,6 +9,16 @@ function CongestionChart({ data, station, weekday }) {
     closed: '#cccccc'
   };
 
+  const getStationName = (stationWithCode) => {
+    const lineCodes = ['BR', 'BL', 'R', 'G', 'O', 'Y'];
+    for (const code of lineCodes) {
+      if (stationWithCode.startsWith(code)) {
+        return stationWithCode.substring(code.length);
+      }
+    }
+    return stationWithCode;
+  };
+
   // 計算 Y 軸範圍 (加 20% 的上邊界以便顯示)
   const maxPeople = Math.max(...data.map(d => d.people));
   const yAxisMax = Math.ceil(maxPeople * 1.2 / 500) * 500; // 四捨五入到 500
@@ -16,7 +26,7 @@ function CongestionChart({ data, station, weekday }) {
 
   return (
     <div className="chart-card">
-      <h3>📊 {station} - {weekday} 全天趨勢</h3>
+      <h3>📊 {getStationName(station)} - {weekday} 全天趨勢</h3>
 
       <div className="chart-wrapper">
         <div className="y-axis">

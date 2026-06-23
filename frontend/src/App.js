@@ -27,9 +27,6 @@ function App() {
       try {
         const response = await axios.get(`${API_BASE}/stations`);
         setStations(response.data.stations);
-        if (response.data.stations.length > 0) {
-          setSelectedStation(response.data.stations[0]);
-        }
       } catch (err) {
         setError('無法載入站點資料');
         console.error(err);

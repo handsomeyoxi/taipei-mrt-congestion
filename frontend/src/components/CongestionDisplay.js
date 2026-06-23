@@ -16,12 +16,22 @@ function CongestionDisplay({ congestion, weekdayName, bestTimes, weekdayNames })
     closed: '未營運'
   };
 
+  const getStationName = (station) => {
+    const lineCodes = ['BR', 'BL', 'R', 'G', 'O', 'Y'];
+    for (const code of lineCodes) {
+      if (station.startsWith(code)) {
+        return station.substring(code.length);
+      }
+    }
+    return station;
+  };
+
   return (
     <div className="congestion-container">
       {/* 主擁擠程度顯示 */}
       <div className="congestion-main-card">
         <div className="congestion-info">
-          <h2>{congestion.station}</h2>
+          <h2>{getStationName(congestion.station)}</h2>
           <p className="time-info">
             {weekdayName} {String(congestion.hour).padStart(2, '0')}:00
           </p>

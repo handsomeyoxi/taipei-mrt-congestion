@@ -63,9 +63,8 @@ function StationSelector({
   // 處理線路變更
   const handleLineChange = (e) => {
     const lineCode = e.target.value;
-    if (lineCode && stationsByLine[lineCode].length > 0) {
-      // 自動選擇該線路的第一個站點
-      onStationChange(stationsByLine[lineCode][0]);
+    if (!lineCode) {
+      onStationChange('');
     }
   };
 
@@ -109,7 +108,7 @@ function StationSelector({
       </div>
 
       <div className="selector-group">
-        <label>星期幾</label>
+        <label>星期</label>
         <select
           value={selectedWeekday}
           onChange={(e) => onWeekdayChange(parseInt(e.target.value))}
