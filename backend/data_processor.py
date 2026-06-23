@@ -13,7 +13,7 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 os.makedirs(CACHE_DIR, exist_ok=True)
 
 # Cache version to force refresh when logic changes
-CACHE_VERSION = 6  # Increment to invalidate old caches
+CACHE_VERSION = 7  # Increment to invalidate old caches
 
 # MRT Line Mapping - 根據台北捷運官方站點列表 (119個站點)
 # 每個站點只被分配給一條主線路 (優先級: 轉乘站分配給該線)
@@ -80,11 +80,18 @@ class DataProcessor:
 
     def get_station_with_line_code(self, station_name):
         """Get station name with line code prefix"""
+        # Handle stations without prefix
+        if station_name == '中原':
+            return 'R中原'
+        elif station_name == '劍潭':
+            return 'R劍潭'
+        elif station_name == '明德':
+            return 'O明德'
+
         if station_name in STATION_LINE_MAPPING:
             line_code = STATION_LINE_MAPPING[station_name]
             return f"{line_code}{station_name}"
-        # If station not in mapping, try to find similar station
-        # or return with a default code (shouldn't happen with complete mapping)
+        # If station not in mapping, return as is
         return station_name
 
     def load_from_cache(self):
