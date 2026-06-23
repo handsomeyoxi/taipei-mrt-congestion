@@ -13,7 +13,7 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 os.makedirs(CACHE_DIR, exist_ok=True)
 
 # Cache version to force refresh when logic changes
-CACHE_VERSION = 15  # Increment to invalidate old caches (force yellow line complete list)
+CACHE_VERSION = 16  # Increment to invalidate old caches (force yellow line 21 stations)
 
 # MRT Line Mapping - 硬編碼每條線的所有站點
 STATION_LINE_MAPPING = {}
