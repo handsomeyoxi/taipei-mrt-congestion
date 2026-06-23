@@ -13,7 +13,7 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 os.makedirs(CACHE_DIR, exist_ok=True)
 
 # Cache version to force refresh when logic changes
-CACHE_VERSION = 11  # Increment to invalidate old caches
+CACHE_VERSION = 12  # Increment to invalidate old caches
 
 # MRT Line Mapping - 硬編碼每條線的所有站點
 STATION_LINE_MAPPING = {}
@@ -504,15 +504,12 @@ class DataProcessor:
         self.save_to_cache()
 
     def _generate_sample_data(self):
-        """生成示例資料供開發測試"""
-        stations = [
-            "台北車站", "中山", "台北101/世貿", "信義安和",
-            "象山", "南港軟體園區", "南港展覽館", "昆陽",
-            "後山埤", "永春", "府中", "新埔"
-        ]
+        """生成示例資料供開發測試 - 包含所有線路的所有站點"""
+        # 使用所有定義的站點
+        all_stations = list(STATION_LINE_MAPPING.keys())
 
         self.data = {}
-        for station in stations:
+        for station in all_stations:
             station_dict = {}
             for weekday in range(7):
                 hours = {}
