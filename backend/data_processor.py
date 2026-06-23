@@ -13,7 +13,7 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 os.makedirs(CACHE_DIR, exist_ok=True)
 
 # Cache version to force refresh when logic changes
-CACHE_VERSION = 8  # Increment to invalidate old caches
+CACHE_VERSION = 9  # Increment to invalidate old caches
 
 # MRT Line Mapping - 硬編碼每條線的所有站點
 STATION_LINE_MAPPING = {}
@@ -38,16 +38,16 @@ O_STATIONS = ['蘆洲', '三和國中', '三重國小', '先嗇宮', '頭前庄'
               '迴龍', '三重', '菜寮', '台北橋', '大橋頭', '民權西路', '中山國小', '行天宮', '松江南京',
               '忠孝新生', '東門', '古亭', '頂溪', '永安市場', '景安', '南勢角']
 
-# 板南線（藍線）BL - 22個站點
+# 板南線（藍線）BL - 23個站點
 BL_STATIONS = ['頂埔', '永寧', '土城', '海山', '亞東醫院', '府中', '板橋', '新埔', '江子翠',
                '龍山寺', '西門', '台北車站', '善導寺', '忠孝新生', '忠孝復興', '忠孝敦化', '國父紀念館',
-               '市政府', '永春', '後山埤', '昆陽', '南港']
+               '市政府', '永春', '後山埤', '昆陽', '南港', '南港展覽館']
 
 # 環狀線（黃線）Y - 30個站點
 Y_STATIONS = ['新北產業園區', '幸福', '頭前庄', '新莊', '丹鳳', '輔大', '新埔', '迴龍', '中原',
               '板橋', '新埔民生', '三重', '菜寮', '台北橋', '大橋頭', '民權西路', '中山國小', '行天宮',
-              '松江南京', '忠孝新生', '東門', '古亭', '頂溪', '永安市場', '景安', '南勢角', '板新',
-              '中正紀念堂', '南港展覽館', '南港']
+              '松江南京', '忠孝新生', '東門', '古亭', '頂溪', '永安市場', '景安', '南勢角', 'Y板橋', '板新',
+              '中正紀念堂']
 
 # 建立映射 (後面的站點優先級更高，用於轉乘站)
 for station in BR_STATIONS:

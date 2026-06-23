@@ -3,6 +3,8 @@ import './StationSelector.css';
 
 function StationSelector({
   stations,
+  selectedLine,
+  onLineChange,
   selectedStation,
   onStationChange,
   selectedWeekday,
@@ -55,17 +57,12 @@ function StationSelector({
     return grouped;
   }, [stations]);
 
-  // 從選定的站點提取線路代碼
-  const selectedLine = useMemo(() => {
-    return extractLineCode(selectedStation) || '';
-  }, [selectedStation]);
-
   // 處理線路變更
   const handleLineChange = (e) => {
     const lineCode = e.target.value;
-    if (!lineCode) {
-      onStationChange('');
-    }
+    onLineChange(lineCode);
+    // 清除車站選擇
+    onStationChange('');
   };
 
   // 處理車站變更
@@ -97,9 +94,12 @@ function StationSelector({
           value={selectedStation}
           onChange={handleStationChange}
           className="selector-input select-large"
+          disabled={!selectedLine}
         >
-          <option value="">-- 選擇車站 --</option>
-          {selectedLine && stationsByLine[selectedLine].map((station) => (
+          <option value="">
+            {selectedLine ? '-- 選擇車站 --' : '-- 請先選擇線路 --'}
+          </option>
+          {selectedLine && stationsByLine[selectedLine] && stationsByLine[selectedLine].map((station) => (
             <option key={station} value={station}>
               {station.substring(extractLineCode(station).length)}
             </option>

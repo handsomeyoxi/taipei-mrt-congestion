@@ -9,6 +9,7 @@ const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:8000';
 
 function App() {
   const [stations, setStations] = useState([]);
+  const [selectedLine, setSelectedLine] = useState('');
   const [selectedStation, setSelectedStation] = useState('');
   const [selectedHour, setSelectedHour] = useState(8);
   const [selectedWeekday, setSelectedWeekday] = useState(0);
@@ -99,6 +100,8 @@ function App() {
         <div className="controls">
           <StationSelector
             stations={stations}
+            selectedLine={selectedLine}
+            onLineChange={setSelectedLine}
             selectedStation={selectedStation}
             onStationChange={setSelectedStation}
             selectedWeekday={selectedWeekday}
