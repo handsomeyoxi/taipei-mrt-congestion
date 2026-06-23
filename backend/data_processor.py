@@ -83,6 +83,17 @@ class DataProcessor:
         self.data = {}
         self.station_percentiles = {}  # Store P33/P66 for each station
         self.data_initialized = False  # Flag for lazy loading
+
+        # Force clear stale cache to ensure fresh data generation
+        # This prevents Render's persistent disk from keeping old 9-station data
+        for cache_file in [self.cache_file, self.version_file]:
+            if os.path.exists(cache_file):
+                try:
+                    os.remove(cache_file)
+                    print(f"[INFO] Cleared stale cache: {cache_file}")
+                except Exception as e:
+                    print(f"[WARN] Failed to clear cache {cache_file}: {e}")
+
         self.load_from_cache()
 
     def get_station_with_line_code(self, station_name):
