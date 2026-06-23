@@ -29,6 +29,15 @@ function StationSelector({
 
   const lineOrder = ['BR', 'R', 'G', 'O', 'BL', 'Y'];
 
+  const lineEmojis = {
+    'BR': '🟤',
+    'R': '🔴',
+    'G': '🟢',
+    'O': '🟠',
+    'BL': '🔵',
+    'Y': '🟡'
+  };
+
   // 根據站點名稱前綴提取線路代碼
   const extractLineCode = (station) => {
     if (station.startsWith('BR')) return 'BR';
@@ -38,6 +47,19 @@ function StationSelector({
     if (station.startsWith('BL')) return 'BL';
     if (station.startsWith('Y')) return 'Y';
     return null;
+  };
+
+  // 查找站點屬於的所有線路
+  const findAllLines = (stationName) => {
+    const lines = [];
+    lineOrder.forEach(code => {
+      if (stationsByLine[code] && stationsByLine[code].some(s =>
+        s.substring(extractLineCode(s).length) === stationName
+      )) {
+        lines.push(code);
+      }
+    });
+    return lines;
   };
 
   // 根據線路分組站點
@@ -99,11 +121,16 @@ function StationSelector({
           <option value="">
             {selectedLine ? '-- 選擇車站 --' : '-- 請先選擇線路 --'}
           </option>
-          {selectedLine && stationsByLine[selectedLine] && stationsByLine[selectedLine].map((station) => (
-            <option key={station} value={station}>
-              {station.substring(extractLineCode(station).length)}
-            </option>
-          ))}
+          {selectedLine && stationsByLine[selectedLine] && stationsByLine[selectedLine].map((station) => {
+            const stationName = station.substring(extractLineCode(station).length);
+            const allLines = findAllLines(stationName);
+            const lineColors = allLines.map(code => lineEmojis[code]).join('');
+            return (
+              <option key={station} value={station}>
+                {lineColors} {stationName}
+              </option>
+            );
+          })}
         </select>
       </div>
 

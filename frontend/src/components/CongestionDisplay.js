@@ -16,6 +16,15 @@ function CongestionDisplay({ congestion, weekdayName, bestTimes, weekdayNames })
     closed: '未營運'
   };
 
+  const lineEmojis = {
+    'BR': '🟤',
+    'R': '🔴',
+    'G': '🟢',
+    'O': '🟠',
+    'BL': '🔵',
+    'Y': '🟡'
+  };
+
   const getStationName = (station) => {
     const lineCodes = ['BR', 'BL', 'R', 'G', 'O', 'Y'];
     for (const code of lineCodes) {
@@ -26,12 +35,29 @@ function CongestionDisplay({ congestion, weekdayName, bestTimes, weekdayNames })
     return station;
   };
 
+  const extractLineCode = (station) => {
+    const lineCodes = ['BR', 'BL', 'R', 'G', 'O', 'Y'];
+    for (const code of lineCodes) {
+      if (station.startsWith(code)) {
+        return code;
+      }
+    }
+    return null;
+  };
+
+  const getStationDisplayName = (station) => {
+    const lineCode = extractLineCode(station);
+    const name = getStationName(station);
+    const emoji = lineCode ? lineEmojis[lineCode] : '';
+    return `${emoji} ${name}`;
+  };
+
   return (
     <div className="congestion-container">
       {/* 主擁擠程度顯示 */}
       <div className="congestion-main-card">
         <div className="congestion-info">
-          <h2>{getStationName(congestion.station)}</h2>
+          <h2>{getStationDisplayName(congestion.station)}</h2>
           <p className="time-info">
             {weekdayName} {String(congestion.hour).padStart(2, '0')}:00
           </p>

@@ -9,14 +9,38 @@ function CongestionChart({ data, station, weekday }) {
     closed: '#cccccc'
   };
 
-  const getStationName = (stationWithCode) => {
+  const lineEmojis = {
+    'BR': '🟤',
+    'R': '🔴',
+    'G': '🟢',
+    'O': '🟠',
+    'BL': '🔵',
+    'Y': '🟡'
+  };
+
+  const extractLineCode = (stationWithCode) => {
     const lineCodes = ['BR', 'BL', 'R', 'G', 'O', 'Y'];
     for (const code of lineCodes) {
       if (stationWithCode.startsWith(code)) {
-        return stationWithCode.substring(code.length);
+        return code;
       }
     }
+    return null;
+  };
+
+  const getStationName = (stationWithCode) => {
+    const lineCode = extractLineCode(stationWithCode);
+    if (lineCode) {
+      return stationWithCode.substring(lineCode.length);
+    }
     return stationWithCode;
+  };
+
+  const getStationDisplayName = (stationWithCode) => {
+    const lineCode = extractLineCode(stationWithCode);
+    const name = getStationName(stationWithCode);
+    const emoji = lineCode ? lineEmojis[lineCode] : '';
+    return `${emoji} ${name}`;
   };
 
   // 計算 Y 軸範圍 (加 20% 的上邊界以便顯示)
@@ -26,7 +50,7 @@ function CongestionChart({ data, station, weekday }) {
 
   return (
     <div className="chart-card">
-      <h3>📊 {getStationName(station)} - {weekday} 全天趨勢</h3>
+      <h3>📊 {getStationDisplayName(station)} - {weekday} 全天趨勢</h3>
 
       <div className="chart-wrapper">
         <div className="y-axis">

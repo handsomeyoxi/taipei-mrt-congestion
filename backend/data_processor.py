@@ -13,7 +13,7 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 os.makedirs(CACHE_DIR, exist_ok=True)
 
 # Cache version to force refresh when logic changes
-CACHE_VERSION = 10  # Increment to invalidate old caches
+CACHE_VERSION = 11  # Increment to invalidate old caches
 
 # MRT Line Mapping - 硬編碼每條線的所有站點
 STATION_LINE_MAPPING = {}
@@ -29,10 +29,10 @@ R_STATIONS = ['象山', '台北101/世貿', '信義安和', '大安', '大安森
               '明德', '石牌', '唭哩岸', '奇岩', '北投', '新北投', '復興崗', '忠義', '關渡', '竹圍',
               '紅樹林', '淡水']
 
-# 松山新店線（綠線）G - 19個站點，按G01→G19順序
-G_STATIONS = ['小碧潭', '新店', '新店區公所', '七張', '大坪林', '景美', '萬隆', '公館', '台電大樓',
-              '古亭', '中正紀念堂', '小南門', '台北車站', '善導寺', '忠孝新生', '南京復興', '台北小巨蛋',
-              '南京三民', '松山']
+# 松山新店線（綠線）G - 19個站點
+G_STATIONS = ['松山', '南京三民', '台北小巨蛋', '南京復興', '忠孝新生', '善導寺', '台北車站',
+              '小南門', '中正紀念堂', '古亭', '台電大樓', '公館', '萬隆', '景美', '大坪林',
+              '七張', '新店區公所', '新店', '小碧潭']
 
 # 中和新蘆線（橘線）O - 24個站點，按O01→O24順序
 O_STATIONS = ['頂溪', '古亭', '東門', '忠孝新生', '松江南京', '行天宮', '中山國小', '新埔民生',
@@ -49,19 +49,31 @@ Y_STATIONS = ['新北產業園區', '幸福', '頭前庄', '新莊', '丹鳳', '
               '板橋', '板新', 'Y板橋', '大坪林', '十四張', '秀朗橋', '景平', '景安', '中和',
               '橋和', '中原', '板橋']
 
-# 建立映射 (後面的站點優先級更高，用於轉乘站)
+# 建立映射 - 每個站可以屬於多條線（轉乘站）
 for station in BR_STATIONS:
-    STATION_LINE_MAPPING[station] = 'BR'
+    if station not in STATION_LINE_MAPPING:
+        STATION_LINE_MAPPING[station] = []
+    STATION_LINE_MAPPING[station].append('BR')
 for station in R_STATIONS:
-    STATION_LINE_MAPPING[station] = 'R'
+    if station not in STATION_LINE_MAPPING:
+        STATION_LINE_MAPPING[station] = []
+    STATION_LINE_MAPPING[station].append('R')
 for station in G_STATIONS:
-    STATION_LINE_MAPPING[station] = 'G'
+    if station not in STATION_LINE_MAPPING:
+        STATION_LINE_MAPPING[station] = []
+    STATION_LINE_MAPPING[station].append('G')
 for station in O_STATIONS:
-    STATION_LINE_MAPPING[station] = 'O'
+    if station not in STATION_LINE_MAPPING:
+        STATION_LINE_MAPPING[station] = []
+    STATION_LINE_MAPPING[station].append('O')
 for station in BL_STATIONS:
-    STATION_LINE_MAPPING[station] = 'BL'
+    if station not in STATION_LINE_MAPPING:
+        STATION_LINE_MAPPING[station] = []
+    STATION_LINE_MAPPING[station].append('BL')
 for station in Y_STATIONS:
-    STATION_LINE_MAPPING[station] = 'Y'
+    if station not in STATION_LINE_MAPPING:
+        STATION_LINE_MAPPING[station] = []
+    STATION_LINE_MAPPING[station].append('Y')
 
 class DataProcessor:
     def __init__(self):
@@ -75,10 +87,19 @@ class DataProcessor:
     def get_station_with_line_code(self, station_name):
         """Get station name with line code prefix based on hardcoded mapping"""
         if station_name in STATION_LINE_MAPPING:
-            line_code = STATION_LINE_MAPPING[station_name]
+            line_codes = STATION_LINE_MAPPING[station_name]
+            # Use first line code for prefix (for transfer stations)
+            line_code = line_codes[0] if isinstance(line_codes, list) else line_codes
             return f"{line_code}{station_name}"
         # If station not in mapping, return as is (shouldn't happen)
         return station_name
+
+    def get_station_lines(self, station_name):
+        """Get all line codes for a station (handles transfer stations)"""
+        if station_name in STATION_LINE_MAPPING:
+            line_codes = STATION_LINE_MAPPING[station_name]
+            return line_codes if isinstance(line_codes, list) else [line_codes]
+        return []
 
     def load_from_cache(self):
         """From cache load data"""
