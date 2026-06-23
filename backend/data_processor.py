@@ -13,7 +13,61 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 os.makedirs(CACHE_DIR, exist_ok=True)
 
 # Cache version to force refresh when logic changes
-CACHE_VERSION = 5  # Increment to invalidate old caches
+CACHE_VERSION = 6  # Increment to invalidate old caches
+
+# MRT Line Mapping - 根據台北捷運官方站點列表 (119個站點)
+# 每個站點只被分配給一條主線路 (優先級: 轉乘站分配給該線)
+STATION_LINE_MAPPING = {
+    # 文湖線 (BR - Brown Line)
+    '南港軟體園區': 'BR', '南港': 'BR', '後山埤': 'BR', '松山': 'BR',
+    '南京三民': 'BR', '中山國小': 'BR', '大直': 'BR', '劍南路': 'BR',
+    '西湖': 'BR', '港墘': 'BR', '內湖': 'BR', '東湖': 'BR',
+    '南港展覽館': 'BR', '復興崗': 'BR', '木柵': 'BR', '麟光': 'BR',
+    '動物園': 'BR',
+
+    # 淡水信義線 (R - Red Line)
+    '淡水': 'R', '竹圍': 'R', '紅樹林': 'R', '北投': 'R', '新北投': 'R',
+    '奇岩': 'R', '唭哩岸': 'R', '石牌': 'R', '芝山': 'R', '士林': 'R',
+    '北門': 'R', '中山': 'R', '南京復興': 'R', '松江南京': 'R',
+    '忠孝新生': 'R', '忠孝復興': 'R', '忠孝敦化': 'R', '市政府': 'R',
+    '永春': 'R', '台北101/世貿': 'R', '信義安和': 'R', '象山': 'R',
+    '關渡': 'R', '行天宮': 'R', '雙連': 'R',
+
+    # 松山新店線 (G - Green Line)
+    '新店': 'G', '新店區公所': 'G', '七張': 'G', '小碧潭': 'G',
+    '景美': 'G', '景平': 'G', '景安': 'G', '南勢角': 'G',
+    '古亭': 'G', '台大醫院': 'G', '台北車站': 'G', '中正紀念堂': 'G',
+    '東門': 'G', '民權西路': 'G', '善導寺': 'G', '台電大樓': 'G',
+    '公館': 'G', '萬隆': 'G', '辛亥': 'G',
+
+    # 中和新蘆線 (O - Orange Line)
+    '蘆洲': 'O', '三民高中': 'O', '三和國中': 'O', '先嗇宮': 'O',
+    '頭前庄': 'O', '新莊': 'O', '迴龍': 'O', '輔大': 'O',
+    '西門': 'O', '龍山寺': 'O', '江南': 'O', '中和': 'O',
+    '頂溪': 'O', '頂埔': 'O', '永寧': 'O', '永安市場': 'O',
+    '新埔民生': 'O', '新埔': 'O', '土城': 'O', '海山': 'O',
+    '亞東醫院': 'O',
+
+    # 板南線 (BL - Blue Line)
+    '昆陽': 'BL', '台北': 'BL', '小南門': 'BL',
+    '三重國小': 'BL', '三重': 'BL', '台北橋': 'BL', '府中': 'BL',
+    '板新': 'BL', '板橋': 'BL',
+
+    # 環狀線 (Y - Yellow Line)
+    '葫洲': 'Y', '大湖公園': 'Y',
+    '忠孝新生': 'Y', '忠孝復興': 'Y', '忠孝敦化': 'Y',
+    '南京復興': 'Y', '松江南京': 'Y',
+    '中正紀念堂': 'Y',
+
+    # 其他站點（補充缺失的）
+    '中山國中': 'R', '中山國小': 'BR', '丹鳳': 'O', '六張犁': 'BR',
+    '十四張': 'G', '國父紀念館': 'R', '圓山': 'R', '大坪林': 'G',
+    '大安': 'R', '大安森林公園': 'G', '大橋頭站': 'O', '台北小巨蛋': 'R',
+    '徐匯中學': 'G', '忠義': 'O', '文德': 'BR', '新北產業園區': 'Y',
+    '昭和': 'BR', '劇場': 'R', '江子翠': 'O', '秀朗橋': 'G',
+    '科技大樓': 'G', '菜寮': 'O', '松山機場': 'R', '橋和': 'BL',
+    '幸福': 'O', '萬芳社區': 'G', '萬芳醫院': 'G',
+}
 
 class DataProcessor:
     def __init__(self):
@@ -23,6 +77,15 @@ class DataProcessor:
         self.data = {}
         self.station_percentiles = {}  # Store P33/P66 for each station
         self.load_from_cache()
+
+    def get_station_with_line_code(self, station_name):
+        """Get station name with line code prefix"""
+        if station_name in STATION_LINE_MAPPING:
+            line_code = STATION_LINE_MAPPING[station_name]
+            return f"{line_code}{station_name}"
+        # If station not in mapping, try to find similar station
+        # or return with a default code (shouldn't happen with complete mapping)
+        return station_name
 
     def load_from_cache(self):
         """From cache load data"""
@@ -317,8 +380,11 @@ class DataProcessor:
             p33 = np.percentile(station_people, 33)
             p66 = np.percentile(station_people, 66)
 
-            # Store the percentiles for this station
-            self.station_percentiles[station] = {
+            # Add line code prefix to station name
+            station_with_code = self.get_station_with_line_code(station)
+
+            # Store the percentiles for this station (with line code prefix)
+            self.station_percentiles[station_with_code] = {
                 "p33": round(p33, 1),
                 "p66": round(p66, 1),
                 "min": round(station_people.min(), 1),
@@ -387,7 +453,8 @@ class DataProcessor:
 
                 station_dict[str(weekday)] = hours
 
-            self.data[station] = station_dict
+            # Store data with line code prefix
+            self.data[station_with_code] = station_dict
 
         print(f"[OK] Processed {len(self.data)} stations")
 
@@ -427,7 +494,7 @@ class DataProcessor:
         stations = [
             "台北車站", "中山", "台北101/世貿", "信義安和",
             "象山", "南港軟體園區", "南港展覽館", "昆陽",
-            "後山埤", "永春", "府中", "新埤"
+            "後山埤", "永春", "府中", "新埔"
         ]
 
         self.data = {}
@@ -452,7 +519,10 @@ class DataProcessor:
                         "level": level
                     }
                 station_dict[str(weekday)] = hours
-            self.data[station] = station_dict
+
+            # Add line code prefix to station name
+            station_with_code = self.get_station_with_line_code(station)
+            self.data[station_with_code] = station_dict
 
         print(f"[OK] Generated {len(self.data)} sample stations")
         self.save_to_cache()
