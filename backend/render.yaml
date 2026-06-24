@@ -4,8 +4,10 @@ services:
     env: python
     region: singapore
     plan: free
-    buildCommand: pip install -r requirements.txt
-    startCommand: gunicorn -w 4 -b 0.0.0.0:8000 main:app
+    buildCommand: pip install -r requirements.txt && find . -name '*.pyc' -delete && find . -name '__pycache__' -type d -exec rm -rf {} + 2>/dev/null || true
+    startCommand: find . -name '*.pyc' -delete && find . -name '__pycache__' -type d -exec rm -rf {} + 2>/dev/null || true; gunicorn -w 4 -b 0.0.0.0:8000 main:app
     envVars:
       - key: PYTHON_VERSION
         value: 3.11.0
+      - key: PYTHONDONTWRITEBYTECODE
+        value: "1"
