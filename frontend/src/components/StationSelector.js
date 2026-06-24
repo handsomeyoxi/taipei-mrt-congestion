@@ -39,13 +39,17 @@ function StationSelector({
   };
 
   // 根據站點名稱前綴提取線路代碼
+  // 注意：必須先檢查2字符的代碼（BR、BL），再檢查1字符的代碼
   const extractLineCode = (station) => {
+    // 2字符線路代碼（必須先檢查）
     if (station.startsWith('BR')) return 'BR';
+    if (station.startsWith('BL')) return 'BL';
+    // 1字符線路代碼
     if (station.startsWith('R')) return 'R';
     if (station.startsWith('G')) return 'G';
     if (station.startsWith('O')) return 'O';
-    if (station.startsWith('BL')) return 'BL';
     if (station.startsWith('Y')) return 'Y';
+    // 未知格式，返回 null
     return null;
   };
 
@@ -69,11 +73,30 @@ function StationSelector({
       grouped[code] = [];
     });
 
+    let unclassifiedCount = 0;
     stations.forEach(station => {
       const lineCode = extractLineCode(station);
       if (lineCode && grouped[lineCode]) {
         grouped[lineCode].push(station);
+      } else {
+        // 調試：如果站點無法分類，記錄警告
+        if (!lineCode) {
+          unclassifiedCount++;
+          console.warn(`[WARNING] 無法提取線路代碼: ${station}`);
+        }
       }
+    });
+
+    // 調試：輸出分組統計
+    console.log('[INFO] 線路站點統計:', {
+      'BR': grouped['BR'].length,
+      'R': grouped['R'].length,
+      'G': grouped['G'].length,
+      'O': grouped['O'].length,
+      'BL': grouped['BL'].length,
+      'Y': grouped['Y'].length,
+      '無法分類': unclassifiedCount,
+      '總計': stations.length
     });
 
     return grouped;
