@@ -65,22 +65,21 @@ async def root():
 
 @app.get("/stations")
 async def get_stations():
-    """取得所有台北捷運站點"""
-    # Debug log：印出 processor.data 的狀態
+    """取得所有台北捷運站點（純站名和線路映射）"""
     print(f"\n[DEBUG] /stations endpoint called")
-    print(f"[DEBUG] processor.data 長度: {len(processor.data)}")
-    if processor.data:
-        data_keys = list(processor.data.keys())[:5]
-        print(f"[DEBUG] 前5個 key: {data_keys}")
-    else:
-        print(f"[DEBUG] processor.data 是空的！")
 
-    stations = processor.get_stations()
-    print(f"[DEBUG] get_stations() 返回: {len(stations)} 個站點")
+    stations, station_lines = processor.get_stations_with_lines()
+    print(f"[DEBUG] 取得 {len(stations)} 個純站名")
+    print(f"[DEBUG] 前10個: {stations[:10]}")
+    print(f"[DEBUG] 線路映射範例: 板橋 -> {station_lines.get('板橋')}, 南勢角 -> {station_lines.get('南勢角')}")
 
     if not stations:
         raise HTTPException(status_code=500, detail="無法取得站點資料")
-    return {"stations": stations}
+
+    return {
+        "stations": stations,
+        "station_lines": station_lines
+    }
 
 
 @app.get("/congestion")

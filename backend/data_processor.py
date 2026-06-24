@@ -624,11 +624,33 @@ class DataProcessor:
         return True
 
     def get_stations(self):
-        """取得所有站點列表"""
+        """取得所有站點列表（帶線路前綴）"""
         return sorted(list(self.data.keys()))
 
+    def get_stations_with_lines(self):
+        """取得所有純站名和線路映射
+        Returns:
+            (stations: list, station_lines: dict)
+            例如: (['板橋', '南勢角'], {'板橋': ['BL', 'Y'], '南勢角': ['O']})
+        """
+        stations = sorted(list(STATION_LINE_MAPPING.keys()))
+        station_lines = {station: lines for station, lines in STATION_LINE_MAPPING.items()}
+        return stations, station_lines
+
     def get_congestion(self, station, hour, weekday):
-        """取得特定站點、時段、星期幾的壅擠程度"""
+        """取得特定站點、時段、星期幾的壅擠程度
+
+        Args:
+            station: 純站名（如 '板橋'）或帶線路前綴的站名（如 'BL板橋'）
+            hour: 時段 0-23
+            weekday: 星期 0-6
+        """
+        # 如果是純站名，自動加上第一條線路的前綴
+        if station not in self.data and station in STATION_LINE_MAPPING:
+            line_codes = self.get_station_lines(station)
+            if line_codes:
+                station = f"{line_codes[0]}{station}"
+
         if station not in self.data:
             return None
 
@@ -685,12 +707,18 @@ class DataProcessor:
         """取得該站當天最不擠的時段，或指定時段前後N小時內最不擠的時段
 
         Args:
-            station: 站點名稱
+            station: 純站名（如 '板橋'）或帶線路前綴的站名（如 'BL板橋'）
             weekday: 星期幾 (0-6)
             hour: 可選，指定的小時 (0-23)
             time_range: 時間範圍 (小時數)，預設 2，可選 1 或 3
             top_n: 返回前 N 個最不擠的時段，預設 3
         """
+        # 如果是純站名，自動加上第一條線路的前綴
+        if station not in self.data and station in STATION_LINE_MAPPING:
+            line_codes = self.get_station_lines(station)
+            if line_codes:
+                station = f"{line_codes[0]}{station}"
+
         if station not in self.data:
             return []
 
@@ -737,7 +765,18 @@ class DataProcessor:
         return result
 
     def get_daily_trend(self, station, weekday):
-        """取得該站全天 24 小時的壅擁趨勢"""
+        """取得該站全天 24 小時的壅擁趨勢
+
+        Args:
+            station: 純站名（如 '板橋'）或帶線路前綴的站名（如 'BL板橋'）
+            weekday: 星期 0-6
+        """
+        # 如果是純站名，自動加上第一條線路的前綴
+        if station not in self.data and station in STATION_LINE_MAPPING:
+            line_codes = self.get_station_lines(station)
+            if line_codes:
+                station = f"{line_codes[0]}{station}"
+
         if station not in self.data:
             return []
 

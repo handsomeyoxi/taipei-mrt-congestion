@@ -9,6 +9,7 @@ const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:8000';
 
 function App() {
   const [stations, setStations] = useState([]);
+  const [stationLines, setStationLines] = useState({});
   const [selectedLine, setSelectedLine] = useState('');
   const [selectedStation, setSelectedStation] = useState('');
   const [selectedHour, setSelectedHour] = useState(8);
@@ -28,7 +29,9 @@ function App() {
       try {
         const response = await axios.get(`${API_BASE}/stations`);
         console.log('[fetchStations] 拿到的前10個stations:', response.data.stations.slice(0, 10));
+        console.log('[fetchStations] station_lines 範例:', { 板橋: response.data.station_lines['板橋'], 南勢角: response.data.station_lines['南勢角'] });
         setStations(response.data.stations);
+        setStationLines(response.data.station_lines);
       } catch (err) {
         setError('無法載入站點資料');
         console.error(err);
@@ -101,6 +104,7 @@ function App() {
         <div className="controls">
           <StationSelector
             stations={stations}
+            stationLines={stationLines}
             selectedLine={selectedLine}
             onLineChange={setSelectedLine}
             selectedStation={selectedStation}

@@ -3,6 +3,7 @@ import './StationSelector.css';
 
 function StationSelector({
   stations,
+  stationLines,
   selectedLine,
   onLineChange,
   selectedStation,
@@ -17,8 +18,7 @@ function StationSelector({
 }) {
   const hours = Array.from({ length: 24 }, (_, i) => i);
 
-  // 定義線路資訊（代碼、名稱）
-  // 注意：移除 emoji 以避免 hydration error（伺服器端和客戶端渲染不一致）
+  // 定義線路資訊（代碼、名稱、標籤）
   const lineInfo = {
     'BR': { name: '文湖線', label: '[棕線] 文湖線' },
     'R': { name: '淡水信義線', label: '[紅線] 淡水信義線' },
@@ -30,7 +30,7 @@ function StationSelector({
 
   const lineOrder = ['BR', 'R', 'G', 'O', 'BL', 'Y'];
 
-  // 線路簡稱映射（純文字，無 emoji）
+  // 線路簡稱映射
   const lineShortNames = {
     'BR': '棕',
     'R': '紅',
@@ -40,22 +40,7 @@ function StationSelector({
     'Y': '黃'
   };
 
-  // 根據站點名稱前綴提取線路代碼
-  // 注意：必須先檢查2字符的代碼（BR、BL），再檢查1字符的代碼
-  const extractLineCode = (station) => {
-    // 2字符線路代碼（必須先檢查）
-    if (station.startsWith('BR')) return 'BR';
-    if (station.startsWith('BL')) return 'BL';
-    // 1字符線路代碼
-    if (station.startsWith('R')) return 'R';
-    if (station.startsWith('G')) return 'G';
-    if (station.startsWith('O')) return 'O';
-    if (station.startsWith('Y')) return 'Y';
-    // 未知格式，返回 null
-    return null;
-  };
-
-  // 根據線路分組站點
+  // 根據線路分組站點（純站名）
   const stationsByLine = useMemo(() => {
     console.log('[stationsByLine] 拿到的前10個stations:', stations.slice(0, 10));
     const grouped = {};
@@ -63,17 +48,15 @@ function StationSelector({
       grouped[code] = [];
     });
 
-    let unclassifiedCount = 0;
+    // 根據 stationLines 將站點分配到各線路
     stations.forEach(station => {
-      const lineCode = extractLineCode(station);
-      if (lineCode && grouped[lineCode]) {
-        grouped[lineCode].push(station);
-      } else {
-        // 調試：如果站點無法分類，記錄警告
-        if (!lineCode) {
-          unclassifiedCount++;
-          console.warn(`[WARNING] 無法提取線路代碼: ${station}`);
-        }
+      if (stationLines[station]) {
+        const lines = stationLines[station];
+        lines.forEach(lineCode => {
+          if (grouped[lineCode]) {
+            grouped[lineCode].push(station);
+          }
+        });
       }
     });
 
@@ -85,27 +68,11 @@ function StationSelector({
       'O': grouped['O'].length,
       'BL': grouped['BL'].length,
       'Y': grouped['Y'].length,
-      '無法分類': unclassifiedCount,
       '總計': stations.length
     });
 
     return grouped;
-  }, [stations]);
-
-  // 查找站點屬於的所有線路
-  const findAllLines = (stationName) => {
-    const lines = [];
-    lineOrder.forEach(code => {
-      if (stationsByLine[code] && stationsByLine[code].some(s => {
-        const lineCode = extractLineCode(s);
-        if (!lineCode) return false;
-        return s.substring(lineCode.length) === stationName;
-      })) {
-        lines.push(code);
-      }
-    });
-    return lines;
-  };
+  }, [stations, stationLines]);
 
   // 處理線路變更
   const handleLineChange = (e) => {
@@ -115,9 +82,7 @@ function StationSelector({
     onStationChange('');
   };
 
-  // 處理車站變更
-  // 注意：傳給後端的是帶線路前綴的完整站名（如 'O南勢角'、'BL板橋'）
-  // 後端的 processor.data 中存的也是帶線路前綴的站名，所以格式一致
+  // 處理車站變更（傳純站名給後端）
   const handleStationChange = (e) => {
     const selectedValue = e.target.value;
     console.log(`[DEBUG] 選擇的車站: ${selectedValue}`);
@@ -154,18 +119,12 @@ function StationSelector({
             {selectedLine ? '-- 選擇車站 --' : '-- 請先選擇線路 --'}
           </option>
           {selectedLine && stationsByLine[selectedLine] && stationsByLine[selectedLine].map((station) => {
-            const lineCode = extractLineCode(station);
-            // 防守性檢查：確保有有效的線路代碼
-            if (!lineCode) {
-              console.error(`[ERROR] 站點 "${station}" 沒有有效的線路代碼`);
-              return null;
-            }
-            const stationName = station.substring(lineCode.length);
-            const allLines = findAllLines(stationName);
+            // 顯示該站所屬的所有線路標籤
+            const allLines = stationLines[station] || [];
             const lineLabels = allLines.map(code => `[${lineShortNames[code]}]`).join('');
             return (
               <option key={station} value={station}>
-                {lineLabels} {stationName}
+                {lineLabels} {station}
               </option>
             );
           })}
