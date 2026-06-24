@@ -649,27 +649,18 @@ class DataProcessor:
         """取得特定站點、時段、星期幾的壅擠程度
 
         Args:
-            station: 純站名（如 '板橋'）或帶線路前綴的站名（如 'BL板橋'）
+            station: 純站名（如 '板橋'、'公館'）
             hour: 時段 0-23
             weekday: 星期 0-6
 
         Returns:
             dict with station field as pure station name
         """
-        # 記錄原始站名（純站名或帶前綴）
-        original_station = station
+        # 直接用純站名查詢（preprocessed_data.json 的 key 是純站名）
         pure_station = station
 
-        # 如果是純站名，自動加上第一條線路的前綴
-        if station not in self.data and station in STATION_LINE_MAPPING:
-            line_codes = self.get_station_lines(station)
-            if line_codes:
-                station = f"{line_codes[0]}{station}"
-        else:
-            # 如果是帶前綴的站名，提取純站名
-            pure_station = self.extract_pure_station_name(station)
-
         if station not in self.data:
+            print(f"[DEBUG] 站名 '{station}' 不在 processor.data 中，可用的 key 數: {len(self.data)}")
             return None
 
         # Lazy loading: 如果該站點未生成數據，動態生成
@@ -725,19 +716,15 @@ class DataProcessor:
         """取得該站當天最不擠的時段，或指定時段前後N小時內最不擠的時段
 
         Args:
-            station: 純站名（如 '板橋'）或帶線路前綴的站名（如 'BL板橋'）
+            station: 純站名（如 '板橋'、'公館'）
             weekday: 星期幾 (0-6)
             hour: 可選，指定的小時 (0-23)
             time_range: 時間範圍 (小時數)，預設 2，可選 1 或 3
             top_n: 返回前 N 個最不擠的時段，預設 3
         """
-        # 如果是純站名，自動加上第一條線路的前綴
-        if station not in self.data and station in STATION_LINE_MAPPING:
-            line_codes = self.get_station_lines(station)
-            if line_codes:
-                station = f"{line_codes[0]}{station}"
-
+        # 直接用純站名查詢（preprocessed_data.json 的 key 是純站名）
         if station not in self.data:
+            print(f"[DEBUG] 站名 '{station}' 不在 processor.data 中，可用的 key 數: {len(self.data)}")
             return []
 
         # Lazy loading: 如果該站點未生成數據，動態生成
@@ -786,16 +773,12 @@ class DataProcessor:
         """取得該站全天 24 小時的壅擁趨勢
 
         Args:
-            station: 純站名（如 '板橋'）或帶線路前綴的站名（如 'BL板橋'）
+            station: 純站名（如 '板橋'、'公館'）
             weekday: 星期 0-6
         """
-        # 如果是純站名，自動加上第一條線路的前綴
-        if station not in self.data and station in STATION_LINE_MAPPING:
-            line_codes = self.get_station_lines(station)
-            if line_codes:
-                station = f"{line_codes[0]}{station}"
-
+        # 直接用純站名查詢（preprocessed_data.json 的 key 是純站名）
         if station not in self.data:
+            print(f"[DEBUG] 站名 '{station}' 不在 processor.data 中，可用的 key 數: {len(self.data)}")
             return []
 
         # Lazy loading: 如果該站點未生成數據，動態生成
