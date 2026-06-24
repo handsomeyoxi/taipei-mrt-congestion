@@ -4,7 +4,7 @@ from data_processor import processor
 import config
 import os
 
-app = FastAPI(title="台北捷運壅擠度預測 API")
+app = FastAPI(title="台北捷運擁擠度預測 API")
 
 # 設定 CORS - 支持本地開發和線上部署
 allowed_origins = [
@@ -52,11 +52,11 @@ async def startup_event():
 async def root():
     """API 健康檢查"""
     return {
-        "message": "台北捷運壅擠度預測 API",
+        "message": "台北捷運擁擠度預測 API",
         "version": "1.0.0",
         "endpoints": {
             "GET /stations": "取得所有站點",
-            "GET /congestion": "查詢特定時段壅擠程度",
+            "GET /congestion": "查詢特定時段擁擠程度",
             "GET /best-time": "查詢該站當天最不擠時段",
             "GET /trend": "查詢該站全天趨勢"
         }
@@ -85,7 +85,7 @@ async def get_stations():
 @app.get("/congestion")
 async def get_congestion(line: str, station: str, hour: int, weekday: int):
     """
-    查詢特定站點、時段、星期幾的壅擠程度
+    查詢特定站點、時段、星期幾的擁擠程度
 
     - line: 線路代碼 (e.g., "R", "BL", "BR") - 必須
     - station: 純站名 (e.g., "台北車站") - 必須
@@ -158,7 +158,7 @@ async def get_best_time(line: str, station: str, weekday: int, hour: int = None,
 @app.get("/trend")
 async def get_trend(line: str, station: str, weekday: int):
     """
-    查詢該站點全天 24 小時的壅擠趨勢
+    查詢該站點全天 24 小時的擁擠趨勢
 
     - line: 線路代碼 (e.g., "R", "BL", "BR") - 必須
     - station: 純站名 (e.g., "台北車站") - 必須

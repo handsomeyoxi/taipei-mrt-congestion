@@ -7,7 +7,7 @@ INDEX_CSV_URL = "https://data.taipei/api/v1/dataset/63f31c7e-7fc3-418b-bd82-b951
 # 資料快取目錄
 CACHE_DIR = os.path.join(os.path.dirname(__file__), "cache")
 
-# 壅擁程度等級定義（基於進站人次百分位）
+# 擁擠程度等級定義（基於進站人次百分位）
 # 低：0-33%  (綠)
 # 中：33-66% (黃)
 # 高：66-100% (紅)

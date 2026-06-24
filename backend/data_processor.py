@@ -690,7 +690,7 @@ class DataProcessor:
         return stations, station_lines
 
     def get_congestion(self, station, hour, weekday, line=None):
-        """取得特定站點、時段、星期幾的壅擠程度
+        """取得特定站點、時段、星期幾的擁擠程度
 
         Args:
             station: 純站名（如 '板橋'、'公館'）
@@ -767,10 +767,10 @@ class DataProcessor:
         }
 
     def _get_suggestion(self, level):
-        """依照壅擠程度回傳建議"""
+        """依照擁擠程度回傳建議"""
         suggestions = {
             "low": "舒適！現在可以搭乘",
-            "medium": "中等壅擠，建議考慮其他時段",
+            "medium": "中等擁擠，建議考慮其他時段",
             "high": "非常擁擠，建議選擇其他時段搭乘",
             "closed": "捷運未營運（營運時間 06:00-23:59）"
         }
@@ -857,7 +857,7 @@ class DataProcessor:
         return result
 
     def get_daily_trend(self, station, weekday, line=None):
-        """取得該站全天 24 小時的壅擁趨勢
+        """取得該站全天 24 小時的擁擠趨勢
 
         Args:
             station: 純站名（如 '板橋'、'公館'）
