@@ -1,4 +1,4 @@
-# 台北捷運壅擠度預測 - 部署指南
+# 台北捷運擁擠度預測 - 部署指南
 
 ## 📋 部署概述
 
@@ -81,7 +81,7 @@ https://taipei-mrt-backend.onrender.com/
 應該看到：
 ```json
 {
-  "message": "台北捷運壅擠度預測 API",
+  "message": "台北捷運擁擠度預測 API",
   "version": "1.0.0",
   "endpoints": { ... }
 }
@@ -95,7 +95,7 @@ https://taipei-mrt-congestion.vercel.app
 ```
 
 應該看到：
-- 完整的台北捷運壅擠度預測界面
+- 完整的台北捷運擁擠度預測界面
 - 能夠選擇車站、日期、時間
 - 實時顯示拥挤度和推薦時段
 

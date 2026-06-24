@@ -20,13 +20,13 @@ taipei-mrt-congestion/
 │   ├── data_processor.py          # 📊 資料處理核心
 │   │   ├─ DataProcessor 類
 │   │   ├─ 下載 CSV 資料
-│   │   ├─ 計算壅擠程度
+│   │   ├─ 計算擁擠程度
 │   │   ├─ 管理快取
 │   │   └─ 查詢和分析資料
 │   │
 │   ├── config.py                  # ⚙️ 配置設定
 │   │   ├─ 索引 CSV URL
-│   │   ├─ 壅擠程度等級定義
+│   │   ├─ 擁擠程度等級定義
 │   │   └─ API 設定
 │   │
 │   ├── requirements.txt           # 📦 Python 依賴
@@ -38,7 +38,7 @@ taipei-mrt-congestion/
 │   │   └─ pydantic
 │   │
 │   ├── cache/                     # 💾 資料快取目錄
-│   │   ├─ congestion_data.json   # 壅擠度統計快取
+│   │   ├─ congestion_data.json   # 擁擠度統計快取
 │   │   ├─ stations.json          # 車站清單快取
 │   │   └─ .gitkeep               # 保持目錄
 │   │
@@ -85,8 +85,8 @@ taipei-mrt-congestion/
 │   │       │  ├─ 輸入框樣式
 │   │       │  └─ 懸停效果
 │   │       │
-│   │       ├─ CongestionDisplay.js # 壅擠度顯示元件
-│   │       │  ├─ 主壅擠度卡片
+│   │       ├─ CongestionDisplay.js # 擁擠度顯示元件
+│   │       │  ├─ 主擁擠度卡片
 │   │       │  ├─ 大色塊顯示
 │   │       │  ├─ 統計資訊
 │   │       │  ├─ 搭車建議
@@ -134,13 +134,13 @@ taipei-mrt-congestion/
 - `DataProcessor` 類：核心資料處理邏輯
 - `download_and_parse_data()`: 下載 CSV 資料
 - `process_dataframes()`: 計算統計數據
-- `get_congestion()`: 查詢壅擠程度
+- `get_congestion()`: 查詢擁擠程度
 - `get_best_times()`: 推薦最佳時段
 - `get_daily_trend()`: 全天趨勢數據
 
 **config.py**
 - 簡化參數管理
-- 定義 3 個壅擠等級
+- 定義 3 個擁擠等級
 - 配置 API 和前端 URL
 
 **cache/ 目錄**
@@ -244,7 +244,7 @@ CongestionDisplay + CongestionChart 渲染
 | 需求 | 檔案 |
 |------|------|
 | 添加新 API 端點 | `backend/main.py` |
-| 改變壅擠度計算 | `backend/data_processor.py` |
+| 改變擁擠度計算 | `backend/data_processor.py` |
 | 修改 UI 布局 | `frontend/src/App.js` |
 | 改變配色 | `frontend/src/**/*.css` |
 | 改變後端 URL | `frontend/src/App.js` 的 `API_BASE` |
