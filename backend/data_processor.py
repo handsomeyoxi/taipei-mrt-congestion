@@ -180,6 +180,14 @@ class DataProcessor:
 
                 self.data_initialized = True
                 print(f"[OK] Preprocessed data loaded: {len(self.data)} stations")
+
+                # 打印所有 station_percentiles
+                print(f"\n[INFO] ===== Station Percentiles =====")
+                for station_key in sorted(self.station_percentiles.keys()):
+                    p = self.station_percentiles[station_key]
+                    print(f"[INFO] {station_key:<15} P33={p['p33']:<8} P66={p['p66']:<8} Min={p['min']:<8} Max={p['max']}")
+                print(f"[INFO] ===== End Percentiles =====\n")
+
                 return True
 
             except Exception as e:
@@ -732,15 +740,19 @@ class DataProcessor:
 
         # 動態計算 level（用該站的 P33/P66）
         level = "low"
-        if station in self.station_percentiles:
-            p33 = self.station_percentiles[station]["p33"]
-            p66 = self.station_percentiles[station]["p66"]
+        if station_key in self.station_percentiles:
+            p33 = self.station_percentiles[station_key]["p33"]
+            p66 = self.station_percentiles[station_key]["p66"]
+            print(f"[DEBUG] 使用 '{station_key}' 的門檻: P33={p33}, P66={p66}, people={people}")
             if people <= p33:
                 level = "low"
             elif people <= p66:
                 level = "medium"
             else:
                 level = "high"
+            print(f"[DEBUG] 計算結果: level={level}")
+        else:
+            print(f"[WARN] '{station_key}' 不在 station_percentiles 中，無法計算 level")
 
         return {
             "station": pure_station,
