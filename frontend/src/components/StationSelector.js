@@ -17,25 +17,27 @@ function StationSelector({
 }) {
   const hours = Array.from({ length: 24 }, (_, i) => i);
 
-  // 定義線路資訊（代碼、名稱、顏色）
+  // 定義線路資訊（代碼、名稱）
+  // 注意：移除 emoji 以避免 hydration error（伺服器端和客戶端渲染不一致）
   const lineInfo = {
-    'BR': { name: '文湖線', color: '🟤 棕線' },
-    'R': { name: '淡水信義線', color: '🔴 紅線' },
-    'G': { name: '松山新店線', color: '🟢 綠線' },
-    'O': { name: '中和新蘆線', color: '🟠 橘線' },
-    'BL': { name: '板南線', color: '🔵 藍線' },
-    'Y': { name: '環狀線', color: '🟡 黃線' }
+    'BR': { name: '文湖線', label: '[棕線] 文湖線' },
+    'R': { name: '淡水信義線', label: '[紅線] 淡水信義線' },
+    'G': { name: '松山新店線', label: '[綠線] 松山新店線' },
+    'O': { name: '中和新蘆線', label: '[橘線] 中和新蘆線' },
+    'BL': { name: '板南線', label: '[藍線] 板南線' },
+    'Y': { name: '環狀線', label: '[黃線] 環狀線' }
   };
 
   const lineOrder = ['BR', 'R', 'G', 'O', 'BL', 'Y'];
 
-  const lineEmojis = {
-    'BR': '🟤',
-    'R': '🔴',
-    'G': '🟢',
-    'O': '🟠',
-    'BL': '🔵',
-    'Y': '🟡'
+  // 線路簡稱映射（純文字，無 emoji）
+  const lineShortNames = {
+    'BR': '棕',
+    'R': '紅',
+    'G': '綠',
+    'O': '橘',
+    'BL': '藍',
+    'Y': '黃'
   };
 
   // 根據站點名稱前綴提取線路代碼
@@ -133,7 +135,7 @@ function StationSelector({
           <option value="">-- 選擇線路 --</option>
           {lineOrder.map((code) => (
             <option key={code} value={code}>
-              {lineInfo[code].color} {lineInfo[code].name}
+              {lineInfo[code].label}
             </option>
           ))}
         </select>
@@ -159,10 +161,10 @@ function StationSelector({
             }
             const stationName = station.substring(lineCode.length);
             const allLines = findAllLines(stationName);
-            const lineColors = allLines.map(code => lineEmojis[code]).join('');
+            const lineLabels = allLines.map(code => `[${lineShortNames[code]}]`).join('');
             return (
               <option key={station} value={station}>
-                {lineColors} {stationName}
+                {lineLabels} {stationName}
               </option>
             );
           })}
