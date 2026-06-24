@@ -86,17 +86,10 @@ class DataProcessor:
         self.station_percentiles = {}  # Store P33/P66 for each station
         self.data_initialized = False  # Flag for lazy loading
 
-        # Force clear stale cache to ensure fresh data generation
-        # This prevents Render's persistent disk from keeping old 9-station data
-        for cache_file in [self.cache_file, self.version_file]:
-            if os.path.exists(cache_file):
-                try:
-                    os.remove(cache_file)
-                    print(f"[INFO] Cleared stale cache: {cache_file}")
-                except Exception as e:
-                    print(f"[WARN] Failed to clear cache {cache_file}: {e}")
-
-        self.load_from_cache()
+        # Always generate fresh data - NO CACHE LOADING
+        # This ensures every startup has complete and up-to-date station data
+        print("[INFO] Cache disabled - generating fresh data on every startup")
+        self._generate_sample_data()
 
     def get_station_with_line_code(self, station_name):
         """Get station name with line code prefix based on hardcoded mapping"""
@@ -542,7 +535,7 @@ class DataProcessor:
 
         self.data_initialized = True
         print(f"[OK] Initialized {len(self.data)} stations for lazy loading (黃線 {len([s for s in self.data.keys() if s.startswith('Y')])} 站)")
-        self.save_to_cache()
+        # Cache disabled - not saving to disk
 
     def _generate_station_data(self, station_with_code):
         """動態生成單個站點的時間序列數據（Lazy Loading）"""
