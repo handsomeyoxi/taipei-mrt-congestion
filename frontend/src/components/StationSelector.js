@@ -113,8 +113,12 @@ function StationSelector({
   };
 
   // 處理車站變更
+  // 注意：傳給後端的是帶線路前綴的完整站名（如 'O南勢角'、'BL板橋'）
+  // 後端的 processor.data 中存的也是帶線路前綴的站名，所以格式一致
   const handleStationChange = (e) => {
-    onStationChange(e.target.value);
+    const selectedValue = e.target.value;
+    console.log(`[DEBUG] 選擇的車站: ${selectedValue}`);
+    onStationChange(selectedValue);
   };
 
   return (
