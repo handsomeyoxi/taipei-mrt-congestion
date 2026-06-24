@@ -1,3 +1,5 @@
+print('=== DATA_PROCESSOR VERSION: 2026-06-24-v2 ===')
+
 import os
 import json
 import requests
