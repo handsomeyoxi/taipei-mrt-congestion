@@ -67,16 +67,18 @@ for station in Y_STATIONS:
 class DataProcessor:
     def __init__(self):
         self.cache_file = os.path.join(CACHE_DIR, "congestion_data.json")
+        self.preprocessed_file = os.path.join(CACHE_DIR, "preprocessed_data.json")
         self.stations_file = os.path.join(CACHE_DIR, "stations.json")
         self.version_file = os.path.join(CACHE_DIR, "version.txt")
         self.data = {}
         self.station_percentiles = {}  # Store P33/P66 for each station
         self.data_initialized = False  # Flag for lazy loading
 
-        # Try to load from cache first, then download real data
-        if not self.load_from_cache():
-            print("[INFO] Cache miss - downloading real data from Taiwan MRT API")
-            self.download_and_parse_data()
+        # Priority: preprocessed data -> cache -> download
+        if not self.load_preprocessed_data():
+            if not self.load_from_cache():
+                print("[INFO] Cache miss - downloading real data from Taiwan MRT API")
+                self.download_and_parse_data()
 
     def get_station_with_line_code(self, station_name):
         """Get station name with line code prefix based on hardcoded mapping"""
@@ -94,6 +96,62 @@ class DataProcessor:
             line_codes = STATION_LINE_MAPPING[station_name]
             return line_codes if isinstance(line_codes, list) else [line_codes]
         return []
+
+    def load_preprocessed_data(self):
+        """Load preprocessed real data JSON (優先方法)"""
+        if os.path.exists(self.preprocessed_file):
+            try:
+                with open(self.preprocessed_file, 'r', encoding='utf-8') as f:
+                    preprocessed_data = json.load(f)
+
+                print(f"[OK] Loaded preprocessed data: {len(preprocessed_data)} stations")
+
+                # 轉換預處理數據格式為帶線路前綴的格式
+                # 從 {station: {weekday: {hour: {people: N}}}} 轉換為
+                # {line_code+station: {weekday: {hour: {...}}}}
+                self.data = {}
+                self.station_percentiles = {}
+
+                for station in preprocessed_data.keys():
+                    # 獲取該站點的線路代碼
+                    line_codes = self.get_station_lines(station)
+
+                    if not line_codes:
+                        # 如果在 STATION_LINE_MAPPING 中找不到，使用原始站名
+                        station_keys = [station]
+                    else:
+                        # 為每條線路建立條目（轉乘站）
+                        station_keys = [f"{code}{station}" for code in line_codes]
+
+                    for station_with_code in station_keys:
+                        self.data[station_with_code] = preprocessed_data[station]
+
+                        # 計算該站的進站人次統計
+                        all_people = []
+                        for weekday_data in preprocessed_data[station].values():
+                            for hour_data in weekday_data.values():
+                                people = hour_data.get('people', 0)
+                                if people > 0:
+                                    all_people.append(people)
+
+                        if all_people:
+                            all_people = np.array(all_people)
+                            self.station_percentiles[station_with_code] = {
+                                "p33": round(np.percentile(all_people, 33), 1),
+                                "p66": round(np.percentile(all_people, 66), 1),
+                                "min": round(all_people.min(), 1),
+                                "max": round(all_people.max(), 1)
+                            }
+
+                self.data_initialized = True
+                print(f"[OK] Preprocessed data loaded with {len(self.data)} station entries (including transfers)")
+                return True
+
+            except Exception as e:
+                print(f"[WARN] Failed to load preprocessed data: {e}")
+                return False
+
+        return False
 
     def load_from_cache(self):
         """From cache load data"""
