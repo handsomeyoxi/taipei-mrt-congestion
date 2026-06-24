@@ -141,18 +141,24 @@ class DataProcessor:
                 self.data = {}
                 self.station_percentiles = {}
 
+                # MRT operating hours: 06:00-23:59 (hours 6-23)
+                MRT_OPERATING_HOURS = set(range(6, 24))
+
                 for station_key in preprocessed_data.keys():
                     # 站名可能已包含線路前綴（如 "BL板橋"）或純站名（如 "板橋"）
                     # 直接使用原始 key 作為站點標識符
                     self.data[station_key] = preprocessed_data[station_key]
 
-                    # 計算該站的進站人次統計
+                    # 計算該站的進站人次統計（只計算營運時間 6-23 點）
                     all_people = []
-                    for weekday_data in preprocessed_data[station_key].values():
-                        for hour_data in weekday_data.values():
-                            people = hour_data.get('people', 0)
-                            if people > 0:
-                                all_people.append(people)
+                    for weekday_str, weekday_data in preprocessed_data[station_key].items():
+                        for hour_str, hour_data in weekday_data.items():
+                            hour = int(hour_str)
+                            # 只收集營運時間（6-23）的資料
+                            if hour in MRT_OPERATING_HOURS:
+                                people = hour_data.get('people', 0)
+                                if people > 0:
+                                    all_people.append(people)
 
                     if all_people:
                         all_people = np.array(all_people)
@@ -162,6 +168,9 @@ class DataProcessor:
                             "min": round(all_people.min(), 1),
                             "max": round(all_people.max(), 1)
                         }
+                        print(f"[DEBUG] {station_key}: P33={self.station_percentiles[station_key]['p33']}, P66={self.station_percentiles[station_key]['p66']}, 樣本數={len(all_people)}")
+                    else:
+                        print(f"[WARN] {station_key}: 沒有有效的營運時間資料")
 
                 self.data_initialized = True
                 print(f"[OK] Preprocessed data loaded: {len(self.data)} stations")
