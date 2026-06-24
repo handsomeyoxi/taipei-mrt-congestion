@@ -1,7 +1,7 @@
 import React from 'react';
 import './CongestionDisplay.css';
 
-function CongestionDisplay({ congestion, weekdayName, bestTimes, weekdayNames }) {
+function CongestionDisplay({ congestion, stationLines, weekdayName, bestTimes, weekdayNames }) {
   const colorMap = {
     green: '#22c55e',
     yellow: '#eab308',
@@ -16,40 +16,23 @@ function CongestionDisplay({ congestion, weekdayName, bestTimes, weekdayNames })
     closed: '未營運'
   };
 
-  const lineEmojis = {
-    'BR': '🟤',
-    'R': '🔴',
-    'G': '🟢',
-    'O': '🟠',
-    'BL': '🔵',
-    'Y': '🟡'
+  const lineShortNames = {
+    'BR': '棕',
+    'R': '紅',
+    'G': '綠',
+    'O': '橘',
+    'BL': '藍',
+    'Y': '黃'
   };
 
-  const getStationName = (station) => {
-    const lineCodes = ['BR', 'BL', 'R', 'G', 'O', 'Y'];
-    for (const code of lineCodes) {
-      if (station.startsWith(code)) {
-        return station.substring(code.length);
-      }
-    }
-    return station;
-  };
+  const getStationDisplayName = (stationName) => {
+    // stationName 是純站名，從 stationLines 中取得線路資訊
+    const lines = stationLines[stationName] || [];
+    if (lines.length === 0) return stationName;
 
-  const extractLineCode = (station) => {
-    const lineCodes = ['BR', 'BL', 'R', 'G', 'O', 'Y'];
-    for (const code of lineCodes) {
-      if (station.startsWith(code)) {
-        return code;
-      }
-    }
-    return null;
-  };
-
-  const getStationDisplayName = (station) => {
-    const lineCode = extractLineCode(station);
-    const name = getStationName(station);
-    const emoji = lineCode ? lineEmojis[lineCode] : '';
-    return `${emoji} ${name}`;
+    // 顯示所有線路標籤
+    const lineLabels = lines.map(code => `[${lineShortNames[code]}]`).join('');
+    return `${lineLabels} ${stationName}`;
   };
 
   return (

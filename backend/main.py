@@ -87,17 +87,19 @@ async def get_congestion(station: str, hour: int, weekday: int):
     """
     查詢特定站點、時段、星期幾的壅擠程度
 
-    - station: 站點名稱 (e.g., "台北車站")
+    - station: 純站名 (e.g., "台北車站") 或帶線路前綴 (e.g., "R台北車站")
     - hour: 時段 0-23
     - weekday: 星期 0-6 (0=週一, 6=週日)
     """
     if not station or hour < 0 or hour > 23 or weekday < 0 or weekday > 6:
         raise HTTPException(status_code=400, detail="參數無效")
 
+    print(f"[DEBUG] /congestion called: station={station}, hour={hour}, weekday={weekday}")
     result = processor.get_congestion(station, hour, weekday)
     if not result:
         raise HTTPException(status_code=404, detail="找不到該站點或時段資料")
 
+    print(f"[DEBUG] /congestion result: {result['station']}, level={result['level']}, people={result['people']}")
     return result
 
 

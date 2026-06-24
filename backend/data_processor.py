@@ -97,6 +97,14 @@ class DataProcessor:
             return line_codes if isinstance(line_codes, list) else [line_codes]
         return []
 
+    def extract_pure_station_name(self, station_with_code):
+        """Extract pure station name from prefixed station name"""
+        line_codes = ['BR', 'BL', 'R', 'G', 'O', 'Y']
+        for code in line_codes:
+            if station_with_code.startswith(code):
+                return station_with_code[len(code):]
+        return station_with_code
+
     def load_preprocessed_data(self):
         """Load preprocessed real data JSON (優先方法)"""
         print(f"[INFO] Looking for preprocessed data at: {self.preprocessed_file}")
@@ -644,12 +652,22 @@ class DataProcessor:
             station: 純站名（如 '板橋'）或帶線路前綴的站名（如 'BL板橋'）
             hour: 時段 0-23
             weekday: 星期 0-6
+
+        Returns:
+            dict with station field as pure station name
         """
+        # 記錄原始站名（純站名或帶前綴）
+        original_station = station
+        pure_station = station
+
         # 如果是純站名，自動加上第一條線路的前綴
         if station not in self.data and station in STATION_LINE_MAPPING:
             line_codes = self.get_station_lines(station)
             if line_codes:
                 station = f"{line_codes[0]}{station}"
+        else:
+            # 如果是帶前綴的站名，提取純站名
+            pure_station = self.extract_pure_station_name(station)
 
         if station not in self.data:
             return None
@@ -670,7 +688,7 @@ class DataProcessor:
         # Handle closed stations
         if level == "closed":
             return {
-                "station": station,
+                "station": pure_station,
                 "hour": hour,
                 "weekday": weekday,
                 "people": 0,
@@ -682,7 +700,7 @@ class DataProcessor:
             }
 
         return {
-            "station": station,
+            "station": pure_station,
             "hour": hour,
             "weekday": weekday,
             "people": data['people'],

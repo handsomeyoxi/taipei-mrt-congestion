@@ -1,7 +1,7 @@
 import React from 'react';
 import './CongestionChart.css';
 
-function CongestionChart({ data, station, weekday }) {
+function CongestionChart({ data, station, stationLines, weekday }) {
   const colorMap = {
     green: '#22c55e',
     yellow: '#eab308',
@@ -9,38 +9,23 @@ function CongestionChart({ data, station, weekday }) {
     closed: '#cccccc'
   };
 
-  const lineEmojis = {
-    'BR': '🟤',
-    'R': '🔴',
-    'G': '🟢',
-    'O': '🟠',
-    'BL': '🔵',
-    'Y': '🟡'
+  const lineShortNames = {
+    'BR': '棕',
+    'R': '紅',
+    'G': '綠',
+    'O': '橘',
+    'BL': '藍',
+    'Y': '黃'
   };
 
-  const extractLineCode = (stationWithCode) => {
-    const lineCodes = ['BR', 'BL', 'R', 'G', 'O', 'Y'];
-    for (const code of lineCodes) {
-      if (stationWithCode.startsWith(code)) {
-        return code;
-      }
-    }
-    return null;
-  };
+  const getStationDisplayName = (stationName) => {
+    // stationName 是純站名，從 stationLines 中取得線路資訊
+    const lines = stationLines[stationName] || [];
+    if (lines.length === 0) return stationName;
 
-  const getStationName = (stationWithCode) => {
-    const lineCode = extractLineCode(stationWithCode);
-    if (lineCode) {
-      return stationWithCode.substring(lineCode.length);
-    }
-    return stationWithCode;
-  };
-
-  const getStationDisplayName = (stationWithCode) => {
-    const lineCode = extractLineCode(stationWithCode);
-    const name = getStationName(stationWithCode);
-    const emoji = lineCode ? lineEmojis[lineCode] : '';
-    return `${emoji} ${name}`;
+    // 顯示所有線路標籤
+    const lineLabels = lines.map(code => `[${lineShortNames[code]}]`).join('');
+    return `${lineLabels} ${stationName}`;
   };
 
   // 計算 Y 軸範圍 (加 20% 的上邊界以便顯示)

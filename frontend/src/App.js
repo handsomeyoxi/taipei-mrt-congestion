@@ -128,6 +128,7 @@ function App() {
             {congestion && (
               <CongestionDisplay
                 congestion={congestion}
+                stationLines={stationLines}
                 weekdayName={weekdayNames[selectedWeekday]}
                 bestTimes={bestTimes}
                 weekdayNames={weekdayNames}
@@ -138,6 +139,7 @@ function App() {
               <CongestionChart
                 data={trendData}
                 station={selectedStation}
+                stationLines={stationLines}
                 weekday={weekdayNames[selectedWeekday]}
               />
             )}
