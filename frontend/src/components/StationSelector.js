@@ -57,9 +57,11 @@ function StationSelector({
   const findAllLines = (stationName) => {
     const lines = [];
     lineOrder.forEach(code => {
-      if (stationsByLine[code] && stationsByLine[code].some(s =>
-        s.substring(extractLineCode(s).length) === stationName
-      )) {
+      if (stationsByLine[code] && stationsByLine[code].some(s => {
+        const lineCode = extractLineCode(s);
+        if (!lineCode) return false;
+        return s.substring(lineCode.length) === stationName;
+      })) {
         lines.push(code);
       }
     });
@@ -145,7 +147,13 @@ function StationSelector({
             {selectedLine ? '-- 選擇車站 --' : '-- 請先選擇線路 --'}
           </option>
           {selectedLine && stationsByLine[selectedLine] && stationsByLine[selectedLine].map((station) => {
-            const stationName = station.substring(extractLineCode(station).length);
+            const lineCode = extractLineCode(station);
+            // 防守性檢查：確保有有效的線路代碼
+            if (!lineCode) {
+              console.error(`[ERROR] 站點 "${station}" 沒有有效的線路代碼`);
+              return null;
+            }
+            const stationName = station.substring(lineCode.length);
             const allLines = findAllLines(stationName);
             const lineColors = allLines.map(code => lineEmojis[code]).join('');
             return (
