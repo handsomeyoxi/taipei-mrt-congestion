@@ -91,15 +91,38 @@ async def get_congestion(station: str, hour: int, weekday: int):
     - hour: 時段 0-23
     - weekday: 星期 0-6 (0=週一, 6=週日)
     """
+    print(f"\n[DEBUG] /congestion endpoint called")
+    print(f"[DEBUG] 收到的 station 參數: '{station}' (type: {type(station).__name__}, len: {len(station)})")
+    print(f"[DEBUG] 收到的 hour: {hour}, weekday: {weekday}")
+
     if not station or hour < 0 or hour > 23 or weekday < 0 or weekday > 6:
+        print(f"[DEBUG] 參數驗證失敗")
         raise HTTPException(status_code=400, detail="參數無效")
 
-    print(f"[DEBUG] /congestion called: station={station}, hour={hour}, weekday={weekday}")
+    print(f"[DEBUG] 檢查 station 是否在 processor.data 中...")
+    print(f"[DEBUG] processor.data 有 {len(processor.data)} 個站點")
+
+    # 檢查是否存在
+    if station in processor.data:
+        print(f"[DEBUG] ✓ station='{station}' 直接在 processor.data 中找到")
+    else:
+        print(f"[DEBUG] station='{station}' 不在 processor.data 中")
+        # 檢查是否是純站名需要加前綴
+        from data_processor import STATION_LINE_MAPPING
+        if station in STATION_LINE_MAPPING:
+            print(f"[DEBUG] ✓ station='{station}' 在 STATION_LINE_MAPPING 中，線路: {STATION_LINE_MAPPING[station]}")
+        else:
+            print(f"[DEBUG] ✗ station='{station}' 也不在 STATION_LINE_MAPPING 中")
+            # 列出所有可用的純站名
+            available_stations = list(STATION_LINE_MAPPING.keys())[:10]
+            print(f"[DEBUG] 前10個可用的純站名: {available_stations}")
+
     result = processor.get_congestion(station, hour, weekday)
     if not result:
+        print(f"[DEBUG] ✗ processor.get_congestion() 返回 None")
         raise HTTPException(status_code=404, detail="找不到該站點或時段資料")
 
-    print(f"[DEBUG] /congestion result: {result['station']}, level={result['level']}, people={result['people']}")
+    print(f"[DEBUG] ✓ /congestion 成功: station={result['station']}, level={result['level']}, people={result['people']}")
     return result
 
 
