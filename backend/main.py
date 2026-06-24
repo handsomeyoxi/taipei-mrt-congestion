@@ -87,18 +87,20 @@ async def get_congestion(line: str, station: str, hour: int, weekday: int):
     """
     查詢特定站點、時段、星期幾的壅擠程度
 
-    - line: 線路代碼 (e.g., "R", "BL", "BR") - 用於顯示
-    - station: 純站名 (e.g., "台北車站") - 用於查詢 processor.data
+    - line: 線路代碼 (e.g., "R", "BL", "BR") - 必須
+    - station: 純站名 (e.g., "台北車站") - 必須
     - hour: 時段 0-23
     - weekday: 星期 0-6 (0=週一, 6=週日)
     """
     print(f"\n[DEBUG] /congestion endpoint called")
-    print(f"[DEBUG] 收到的 line: '{line}', station: '{station}'")
+    print(f"[DEBUG] 收到的參數: line='{line}' (type: {type(line).__name__}), station='{station}' (type: {type(station).__name__})")
     print(f"[DEBUG] 收到的 hour: {hour}, weekday: {weekday}")
 
     if not line or not station or hour < 0 or hour > 23 or weekday < 0 or weekday > 6:
-        print(f"[DEBUG] 參數驗證失敗")
+        print(f"[DEBUG] ✗ 參數驗證失敗: line={repr(line)}, station={repr(station)}")
         raise HTTPException(status_code=400, detail="參數無效")
+
+    print(f"[DEBUG] ✓ 參數驗證通過")
 
     # 查詢（先試純站名，再試帶前綴）
     result = processor.get_congestion(station, hour, weekday, line=line)
@@ -115,17 +117,20 @@ async def get_best_time(line: str, station: str, weekday: int, hour: int = None,
     """
     查詢該站點當天或指定時段前後最不擠的時段
 
-    - line: 線路代碼 (e.g., "R", "BL", "BR") - 用於顯示
-    - station: 純站名 (e.g., "台北車站") - 用於查詢 processor.data
+    - line: 線路代碼 (e.g., "R", "BL", "BR") - 必須
+    - station: 純站名 (e.g., "台北車站") - 必須
     - weekday: 星期 0-6
     - hour: 可選，指定的小時（0-23），將推薦該時段前後N小時內最不擠的3個時段
     - time_range: 時間範圍（小時），預設 2（±2小時），可選 1 或 3
     """
     print(f"\n[DEBUG] /best-time endpoint called")
-    print(f"[DEBUG] 收到的 line: '{line}', station: '{station}'")
+    print(f"[DEBUG] 收到的參數: line='{line}' (type: {type(line).__name__}), station='{station}' (type: {type(station).__name__})")
 
     if not line or not station or weekday < 0 or weekday > 6:
+        print(f"[DEBUG] ✗ 參數驗證失敗: line={repr(line)}, station={repr(station)}, weekday={weekday}")
         raise HTTPException(status_code=400, detail="參數無效")
+
+    print(f"[DEBUG] ✓ 參數驗證通過")
 
     if hour is not None and (hour < 0 or hour > 23):
         raise HTTPException(status_code=400, detail="小時參數無效")
@@ -155,15 +160,18 @@ async def get_trend(line: str, station: str, weekday: int):
     """
     查詢該站點全天 24 小時的壅擠趨勢
 
-    - line: 線路代碼 (e.g., "R", "BL", "BR") - 用於顯示
-    - station: 純站名 (e.g., "台北車站") - 用於查詢 processor.data
+    - line: 線路代碼 (e.g., "R", "BL", "BR") - 必須
+    - station: 純站名 (e.g., "台北車站") - 必須
     - weekday: 星期 0-6
     """
     print(f"\n[DEBUG] /trend endpoint called")
-    print(f"[DEBUG] 收到的 line: '{line}', station: '{station}'")
+    print(f"[DEBUG] 收到的參數: line='{line}' (type: {type(line).__name__}), station='{station}' (type: {type(station).__name__})")
 
     if not line or not station or weekday < 0 or weekday > 6:
+        print(f"[DEBUG] ✗ 參數驗證失敗: line={repr(line)}, station={repr(station)}, weekday={weekday}")
         raise HTTPException(status_code=400, detail="參數無效")
+
+    print(f"[DEBUG] ✓ 參數驗證通過")
 
     # 查詢（先試純站名，再試帶前綴）
     result = processor.get_daily_trend(station, weekday, line=line)

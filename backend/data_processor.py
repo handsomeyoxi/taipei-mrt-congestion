@@ -114,16 +114,22 @@ class DataProcessor:
 
         Returns the key if found, None otherwise
         """
+        print(f"[DEBUG] find_station_key called: line='{line}', station='{station}'")
+
         # Try pure station name first
         if station in self.data:
+            print(f"[DEBUG] ✓ 找到純站名: '{station}'")
             return station
 
         # Try prefixed format (line + station)
         prefixed_station = f"{line}{station}"
+        print(f"[DEBUG] 嘗試帶前綴: '{prefixed_station}'")
         if prefixed_station in self.data:
+            print(f"[DEBUG] ✓ 找到帶前綴: '{prefixed_station}'")
             return prefixed_station
 
         # Not found
+        print(f"[DEBUG] ✗ 找不到站點（嘗試了 '{station}' 和 '{prefixed_station}'）")
         return None
 
     def load_preprocessed_data(self):
