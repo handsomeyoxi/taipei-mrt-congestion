@@ -106,49 +106,40 @@ class DataProcessor:
 
                 print(f"[OK] Loaded preprocessed data: {len(preprocessed_data)} stations")
 
-                # 轉換預處理數據格式為帶線路前綴的格式
-                # 從 {station: {weekday: {hour: {people: N}}}} 轉換為
-                # {line_code+station: {weekday: {hour: {...}}}}
+                # 處理預處理數據（可能已有線路前綴或不含）
                 self.data = {}
                 self.station_percentiles = {}
 
-                for station in preprocessed_data.keys():
-                    # 獲取該站點的線路代碼
-                    line_codes = self.get_station_lines(station)
+                for station_key in preprocessed_data.keys():
+                    # 站名可能已包含線路前綴（如 "BL板橋"）或純站名（如 "板橋"）
+                    # 直接使用原始 key 作為站點標識符
+                    self.data[station_key] = preprocessed_data[station_key]
 
-                    if not line_codes:
-                        # 如果在 STATION_LINE_MAPPING 中找不到，使用原始站名
-                        station_keys = [station]
-                    else:
-                        # 為每條線路建立條目（轉乘站）
-                        station_keys = [f"{code}{station}" for code in line_codes]
+                    # 計算該站的進站人次統計
+                    all_people = []
+                    for weekday_data in preprocessed_data[station_key].values():
+                        for hour_data in weekday_data.values():
+                            people = hour_data.get('people', 0)
+                            if people > 0:
+                                all_people.append(people)
 
-                    for station_with_code in station_keys:
-                        self.data[station_with_code] = preprocessed_data[station]
-
-                        # 計算該站的進站人次統計
-                        all_people = []
-                        for weekday_data in preprocessed_data[station].values():
-                            for hour_data in weekday_data.values():
-                                people = hour_data.get('people', 0)
-                                if people > 0:
-                                    all_people.append(people)
-
-                        if all_people:
-                            all_people = np.array(all_people)
-                            self.station_percentiles[station_with_code] = {
-                                "p33": round(np.percentile(all_people, 33), 1),
-                                "p66": round(np.percentile(all_people, 66), 1),
-                                "min": round(all_people.min(), 1),
-                                "max": round(all_people.max(), 1)
-                            }
+                    if all_people:
+                        all_people = np.array(all_people)
+                        self.station_percentiles[station_key] = {
+                            "p33": round(np.percentile(all_people, 33), 1),
+                            "p66": round(np.percentile(all_people, 66), 1),
+                            "min": round(all_people.min(), 1),
+                            "max": round(all_people.max(), 1)
+                        }
 
                 self.data_initialized = True
-                print(f"[OK] Preprocessed data loaded with {len(self.data)} station entries (including transfers)")
+                print(f"[OK] Preprocessed data loaded: {len(self.data)} stations")
                 return True
 
             except Exception as e:
                 print(f"[WARN] Failed to load preprocessed data: {e}")
+                import traceback
+                traceback.print_exc()
                 return False
 
         return False
