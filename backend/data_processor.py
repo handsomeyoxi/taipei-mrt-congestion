@@ -99,12 +99,14 @@ class DataProcessor:
 
     def load_preprocessed_data(self):
         """Load preprocessed real data JSON (優先方法)"""
+        print(f"[INFO] Looking for preprocessed data at: {self.preprocessed_file}")
+
         if os.path.exists(self.preprocessed_file):
             try:
                 with open(self.preprocessed_file, 'r', encoding='utf-8') as f:
                     preprocessed_data = json.load(f)
 
-                print(f"[OK] Loaded preprocessed data: {len(preprocessed_data)} stations")
+                print(f"[OK] Loaded preprocessed data from cache: {len(preprocessed_data)} stations")
 
                 # 處理預處理數據（可能已有線路前綴或不含）
                 self.data = {}
