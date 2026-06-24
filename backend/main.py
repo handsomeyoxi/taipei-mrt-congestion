@@ -113,7 +113,7 @@ async def get_congestion(line: str, station: str, hour: int, weekday: int):
     return result
 
 
->@app.get("/best-time")
+@app.get("/best-time")
 async def get_best_time(line: str, station: str, weekday: int, hour: int = None, time_range: int = 2):
     """
     查詢該站點當天或指定時段前後最不擠的時段
