@@ -19,27 +19,17 @@ function StationSelector({
   // 只顯示 06:00 到 23:59（營運時間）
   const hours = Array.from({ length: 18 }, (_, i) => i + 6);
 
-  // 定義線路資訊（代碼、名稱、標籤）
+  // 定義線路資訊（代碼、名稱、emoji）
   const lineInfo = {
-    'BR': { name: '文湖線', label: '[棕線] 文湖線' },
-    'R': { name: '淡水信義線', label: '[紅線] 淡水信義線' },
-    'G': { name: '松山新店線', label: '[綠線] 松山新店線' },
-    'O': { name: '中和新蘆線', label: '[橘線] 中和新蘆線' },
-    'BL': { name: '板南線', label: '[藍線] 板南線' },
-    'Y': { name: '環狀線', label: '[黃線] 環狀線' }
+    'BR': { name: '文湖線', emoji: '🟤', label: '🟤 棕線' },
+    'R': { name: '淡水信義線', emoji: '🔴', label: '🔴 紅線' },
+    'G': { name: '松山新店線', emoji: '🟢', label: '🟢 綠線' },
+    'O': { name: '中和新蘆線', emoji: '🟠', label: '🟠 橘線' },
+    'BL': { name: '板南線', emoji: '🔵', label: '🔵 藍線' },
+    'Y': { name: '環狀線', emoji: '🟡', label: '🟡 黃線' }
   };
 
   const lineOrder = ['BR', 'R', 'G', 'O', 'BL', 'Y'];
-
-  // 線路簡稱映射
-  const lineShortNames = {
-    'BR': '棕',
-    'R': '紅',
-    'G': '綠',
-    'O': '橘',
-    'BL': '藍',
-    'Y': '黃'
-  };
 
   // 根據線路分組站點（純站名）
   const stationsByLine = useMemo(() => {
@@ -102,7 +92,7 @@ function StationSelector({
           <option value="">-- 選擇線路 --</option>
           {lineOrder.map((code) => (
             <option key={code} value={code}>
-              {lineInfo[code].label}
+              {lineInfo[code].emoji} {lineInfo[code].name}
             </option>
           ))}
         </select>
@@ -120,12 +110,12 @@ function StationSelector({
             {selectedLine ? '-- 選擇車站 --' : '-- 請先選擇線路 --'}
           </option>
           {selectedLine && stationsByLine[selectedLine] && stationsByLine[selectedLine].map((station) => {
-            // 顯示該站所屬的所有線路標籤
+            // 顯示該站所屬的所有線路 emoji 圓點
             const allLines = stationLines[station] || [];
-            const lineLabels = allLines.map(code => `[${lineShortNames[code]}]`).join('');
+            const lineEmojis = allLines.map(code => lineInfo[code].emoji).join('');
             return (
               <option key={station} value={station}>
-                {lineLabels} {station}
+                {lineEmojis} {station}
               </option>
             );
           })}

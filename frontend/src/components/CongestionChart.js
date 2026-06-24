@@ -9,13 +9,13 @@ function CongestionChart({ data, station, stationLines, weekday }) {
     closed: '#cccccc'
   };
 
-  const lineShortNames = {
-    'BR': '棕',
-    'R': '紅',
-    'G': '綠',
-    'O': '橘',
-    'BL': '藍',
-    'Y': '黃'
+  const lineEmojis = {
+    'BR': '🟤',
+    'R': '🔴',
+    'G': '🟢',
+    'O': '🟠',
+    'BL': '🔵',
+    'Y': '🟡'
   };
 
   const getStationDisplayName = (stationName) => {
@@ -23,9 +23,9 @@ function CongestionChart({ data, station, stationLines, weekday }) {
     const lines = stationLines[stationName] || [];
     if (lines.length === 0) return stationName;
 
-    // 顯示所有線路標籤
-    const lineLabels = lines.map(code => `[${lineShortNames[code]}]`).join('');
-    return `${lineLabels} ${stationName}`;
+    // 顯示所有線路 emoji 圓點
+    const emojis = lines.map(code => lineEmojis[code]).join('');
+    return `${emojis} ${stationName}`;
   };
 
   // 計算 Y 軸範圍 (加 20% 的上邊界以便顯示)

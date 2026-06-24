@@ -42,18 +42,19 @@ function App() {
 
   // 查詢擁擠度和建議時段
   const handleQuery = async () => {
-    if (!selectedStation) {
-      setError('請選擇車站');
+    if (!selectedStation || !selectedLine) {
+      setError('請選擇線路和車站');
       return;
     }
 
     setLoading(true);
     setError('');
     try {
-      // 並行查詢三個 API
+      // 並行查詢三個 API（傳遞 line 和 station）
       const [congestionRes, bestTimesRes, trendRes] = await Promise.all([
         axios.get(`${API_BASE}/congestion`, {
           params: {
+            line: selectedLine,
             station: selectedStation,
             hour: selectedHour,
             weekday: selectedWeekday
@@ -61,6 +62,7 @@ function App() {
         }),
         axios.get(`${API_BASE}/best-time`, {
           params: {
+            line: selectedLine,
             station: selectedStation,
             weekday: selectedWeekday,
             hour: selectedHour,
@@ -69,6 +71,7 @@ function App() {
         }),
         axios.get(`${API_BASE}/trend`, {
           params: {
+            line: selectedLine,
             station: selectedStation,
             weekday: selectedWeekday
           }
