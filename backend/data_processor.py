@@ -673,11 +673,11 @@ class DataProcessor:
         if str(hour) not in self.data[station][str(weekday)]:
             return None
 
-        data = self.data[station][str(weekday)][str(hour)]
-        level = data['level']
+        hour_data = self.data[station][str(weekday)][str(hour)]
+        people = hour_data.get('people', 0)
 
-        # Handle closed stations
-        if level == "closed":
+        # 檢查營運時間（06:00-23:59）
+        if hour < 6:
             return {
                 "station": pure_station,
                 "hour": hour,
@@ -690,16 +690,28 @@ class DataProcessor:
                 "is_operating": False
             }
 
+        # 動態計算 level（用該站的 P33/P66）
+        level = "low"
+        if station in self.station_percentiles:
+            p33 = self.station_percentiles[station]["p33"]
+            p66 = self.station_percentiles[station]["p66"]
+            if people <= p33:
+                level = "low"
+            elif people <= p66:
+                level = "medium"
+            else:
+                level = "high"
+
         return {
             "station": pure_station,
             "hour": hour,
             "weekday": weekday,
-            "people": data['people'],
+            "people": people,
             "level": level,
             "color": CONGESTION_LEVELS[level]["color"],
             "label": CONGESTION_LEVELS[level]["label"],
             "suggestion": self._get_suggestion(level),
-            "is_operating": data.get('is_operating', True)
+            "is_operating": True
         }
 
     def _get_suggestion(self, level):
@@ -746,25 +758,44 @@ class DataProcessor:
             # 全天營運時間
             hour_range = set(range(6, 24))
 
-        # 篩選時段範圍內且非未營運的時段
-        filtered_hours = [
-            (int(h_str), data) for h_str, data in hours.items()
-            if int(h_str) in hour_range and data['level'] != 'closed'
-        ]
+        # 篩選時段範圍內的時段（只包含營運時間）
+        filtered_hours = []
+        for h_str, hour_data in hours.items():
+            h_int = int(h_str)
+            if h_int in hour_range:
+                people = hour_data.get('people', 0)
+
+                # 動態計算 level
+                level = "low"
+                if station in self.station_percentiles:
+                    p33 = self.station_percentiles[station]["p33"]
+                    p66 = self.station_percentiles[station]["p66"]
+                    if people <= p33:
+                        level = "low"
+                    elif people <= p66:
+                        level = "medium"
+                    else:
+                        level = "high"
+
+                filtered_hours.append({
+                    "hour": h_int,
+                    "people": people,
+                    "level": level
+                })
 
         # 按人次排序，取最少的時段
         sorted_hours = sorted(
             filtered_hours,
-            key=lambda x: x[1]['people']
+            key=lambda x: x['people']
         )
 
         result = []
-        for hour_int, data in sorted_hours[:top_n]:
+        for item in sorted_hours[:top_n]:
             result.append({
-                "hour": hour_int,
-                "people": data['people'],
-                "level": data['level'],
-                "label": CONGESTION_LEVELS[data['level']]["label"]
+                "hour": item['hour'],
+                "people": item['people'],
+                "level": item['level'],
+                "label": CONGESTION_LEVELS[item['level']]["label"]
             })
 
         return result
@@ -793,9 +824,10 @@ class DataProcessor:
 
         for hour in range(24):
             if str(hour) in hours:
-                data = hours[str(hour)]
+                hour_data = hours[str(hour)]
+                people = hour_data.get('people', 0)
 
-                # Force non-operating hours (0-5) to be marked as closed
+                # 非營運時間（0-5）標記為 closed
                 if hour < 6:
                     trend.append({
                         "hour": hour,
@@ -804,11 +836,23 @@ class DataProcessor:
                         "color": CONGESTION_LEVELS["closed"]["color"]
                     })
                 else:
+                    # 營運時間動態計算 level
+                    level = "low"
+                    if station in self.station_percentiles:
+                        p33 = self.station_percentiles[station]["p33"]
+                        p66 = self.station_percentiles[station]["p66"]
+                        if people <= p33:
+                            level = "low"
+                        elif people <= p66:
+                            level = "medium"
+                        else:
+                            level = "high"
+
                     trend.append({
                         "hour": hour,
-                        "people": data['people'],
-                        "level": data['level'],
-                        "color": CONGESTION_LEVELS[data['level']]["color"]
+                        "people": people,
+                        "level": level,
+                        "color": CONGESTION_LEVELS[level]["color"]
                     })
 
         return trend
