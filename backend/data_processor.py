@@ -73,10 +73,10 @@ class DataProcessor:
         self.station_percentiles = {}  # Store P33/P66 for each station
         self.data_initialized = False  # Flag for lazy loading
 
-        # Always generate fresh data - NO CACHE LOADING
-        # This ensures every startup has complete and up-to-date station data
-        print("[INFO] Cache disabled - generating fresh data on every startup")
-        self._generate_sample_data()
+        # Try to load from cache first, then download real data
+        if not self.load_from_cache():
+            print("[INFO] Cache miss - downloading real data from Taiwan MRT API")
+            self.download_and_parse_data()
 
     def get_station_with_line_code(self, station_name):
         """Get station name with line code prefix based on hardcoded mapping"""
@@ -141,12 +141,13 @@ class DataProcessor:
             print(f"[ERROR] Cache save failed: {e}")
 
     def get_fixed_data_urls(self):
-        """Get fixed data URL from Azure Blob Storage (latest month only for low memory)"""
-        # Only latest month to fit in Render free tier (512MB RAM)
+        """Get fixed data URLs from Azure Blob Storage (backup URLs, latest 3 months)"""
         urls = [
             "http://tcgmetro.blob.core.windows.net/stationod/臺北捷運每日分時各站OD流量統計資料_202501.csv",
+            "http://tcgmetro.blob.core.windows.net/stationod/臺北捷運每日分時各站OD流量統計資料_202412.csv",
+            "http://tcgmetro.blob.core.windows.net/stationod/臺北捷運每日分時各站OD流量統計資料_202411.csv",
         ]
-        print(f"[OK] Using fixed data URLs ({len(urls)} month) - optimized for low memory:")
+        print(f"[WARN] Using fixed data URLs as backup ({len(urls)} months):")
         for url in urls:
             print(f"     {url}")
         return urls
@@ -264,21 +265,29 @@ class DataProcessor:
             traceback.print_exc()
             return []
 
-    def download_and_parse_data(self, urls=None, csv_path=None, months=1):
-        """Download and parse monthly data"""
-        # Use local index CSV if provided
-        if csv_path and os.path.exists(csv_path):
-            print(f"[INFO] Reading local index CSV: {csv_path}")
-            urls = self.fetch_index_csv_local(csv_path, months=months)
+    def download_and_parse_data(self, urls=None, csv_path=None, months=3):
+        """Download and parse monthly data from API or backup URLs"""
+        # Try methods in order: API -> Local CSV -> Fixed URLs -> Sample Data
 
-        # If no URLs yet, use fixed URLs from Azure Blob Storage
+        # Method 1: Try to fetch from Taiwan MRT API (Taipei Open Data)
         if urls is None or len(urls) == 0:
-            print(f"[INFO] Using fixed data URLs from Azure Blob Storage...")
+            print(f"[INFO] Attempting to fetch from Taiwan MRT API...")
+            urls = self.fetch_index_csv()
+
+        # Method 2: Use local index CSV if provided
+        if urls is None or len(urls) == 0:
+            if csv_path and os.path.exists(csv_path):
+                print(f"[INFO] Attempting to read local index CSV: {csv_path}")
+                urls = self.fetch_index_csv_local(csv_path, months=months)
+
+        # Method 3: Use fixed URLs from Azure Blob Storage as backup
+        if urls is None or len(urls) == 0:
+            print(f"[INFO] Attempting to use fixed data URLs from Azure Blob Storage...")
             urls = self.get_fixed_data_urls()
 
-        # If still no URLs, use sample data as fallback
+        # Method 4: If all download methods fail, use sample data as fallback
         if urls is None or len(urls) == 0:
-            print("[WARN] Unable to get data URLs, using sample data")
+            print("[WARN] Unable to get data URLs from any source, using sample data")
             self._generate_sample_data()
             return
 
