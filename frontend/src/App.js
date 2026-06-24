@@ -12,7 +12,7 @@ function App() {
   const [stationLines, setStationLines] = useState({});
   const [selectedLine, setSelectedLine] = useState('');
   const [selectedStation, setSelectedStation] = useState('');
-  const [selectedHour, setSelectedHour] = useState(8);
+  const [selectedHour, setSelectedHour] = useState(8); // 預設 08:00
   const [selectedWeekday, setSelectedWeekday] = useState(0);
   const [selectedTimeRange, setSelectedTimeRange] = useState(2);
   const [congestion, setCongestion] = useState(null);

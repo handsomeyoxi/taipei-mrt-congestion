@@ -126,16 +126,19 @@ async def get_congestion(station: str, hour: int, weekday: int):
     return result
 
 
-@app.get("/best-time")
+>@app.get("/best-time")
 async def get_best_time(station: str, weekday: int, hour: int = None, time_range: int = 2):
     """
     查詢該站點當天或指定時段前後最不擠的時段
 
-    - station: 站點名稱
+    - station: 純站名 (e.g., "台北車站") 或帶線路前綴 (e.g., "R台北車站")
     - weekday: 星期 0-6
     - hour: 可選，指定的小時（0-23），將推薦該時段前後N小時內最不擠的3個時段
     - time_range: 時間範圍（小時），預設 2（±2小時），可選 1 或 3
     """
+    print(f"\n[DEBUG] /best-time endpoint called")
+    print(f"[DEBUG] 收到的 station 參數: '{station}'")
+
     if not station or weekday < 0 or weekday > 6:
         raise HTTPException(status_code=400, detail="參數無效")
 
@@ -147,8 +150,10 @@ async def get_best_time(station: str, weekday: int, hour: int = None, time_range
 
     result = processor.get_best_times(station, weekday, hour=hour, time_range=time_range, top_n=3)
     if not result:
+        print(f"[DEBUG] ✗ processor.get_best_times() 返回空結果")
         raise HTTPException(status_code=404, detail="找不到該站點資料")
 
+    print(f"[DEBUG] ✓ /best-time 成功: 找到 {len(result)} 個推薦時段")
     weekdays = ["週一", "週二", "週三", "週四", "週五", "週六", "週日"]
     return {
         "station": station,
@@ -164,16 +169,21 @@ async def get_trend(station: str, weekday: int):
     """
     查詢該站點全天 24 小時的壅擠趨勢
 
-    - station: 站點名稱
+    - station: 純站名 (e.g., "台北車站") 或帶線路前綴 (e.g., "R台北車站")
     - weekday: 星期 0-6
     """
+    print(f"\n[DEBUG] /trend endpoint called")
+    print(f"[DEBUG] 收到的 station 參數: '{station}'")
+
     if not station or weekday < 0 or weekday > 6:
         raise HTTPException(status_code=400, detail="參數無效")
 
     result = processor.get_daily_trend(station, weekday)
     if not result:
+        print(f"[DEBUG] ✗ processor.get_daily_trend() 返回空結果")
         raise HTTPException(status_code=404, detail="找不到該站點資料")
 
+    print(f"[DEBUG] ✓ /trend 成功: 找到 {len(result)} 個小時的趨勢資料")
     return {
         "station": station,
         "weekday": weekday,

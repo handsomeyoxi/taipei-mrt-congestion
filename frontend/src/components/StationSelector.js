@@ -16,7 +16,8 @@ function StationSelector({
   onTimeRangeChange,
   weekdayNames
 }) {
-  const hours = Array.from({ length: 24 }, (_, i) => i);
+  // 只顯示 06:00 到 23:59（營運時間）
+  const hours = Array.from({ length: 18 }, (_, i) => i + 6);
 
   // 定義線路資訊（代碼、名稱、標籤）
   const lineInfo = {
