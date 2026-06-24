@@ -100,9 +100,8 @@ async def get_congestion(line: str, station: str, hour: int, weekday: int):
         print(f"[DEBUG] 參數驗證失敗")
         raise HTTPException(status_code=400, detail="參數無效")
 
-    # 直接用純站名查詢（preprocessed_data.json 的 key 是純站名）
-    print(f"[DEBUG] 用純站名查詢: '{station}'")
-    result = processor.get_congestion(station, hour, weekday)
+    # 查詢（先試純站名，再試帶前綴）
+    result = processor.get_congestion(station, hour, weekday, line=line)
     if not result:
         print(f"[DEBUG] ✗ processor.get_congestion() 返回 None")
         raise HTTPException(status_code=404, detail="找不到該站點或時段資料")
@@ -134,9 +133,8 @@ async def get_best_time(line: str, station: str, weekday: int, hour: int = None,
     if time_range not in [1, 2, 3]:
         raise HTTPException(status_code=400, detail="時間範圍必須是 1、2 或 3")
 
-    # 直接用純站名查詢（preprocessed_data.json 的 key 是純站名）
-    print(f"[DEBUG] 用純站名查詢: '{station}'")
-    result = processor.get_best_times(station, weekday, hour=hour, time_range=time_range, top_n=3)
+    # 查詢（先試純站名，再試帶前綴）
+    result = processor.get_best_times(station, weekday, hour=hour, time_range=time_range, top_n=3, line=line)
     if not result:
         print(f"[DEBUG] ✗ processor.get_best_times() 返回空結果")
         raise HTTPException(status_code=404, detail="找不到該站點資料")
@@ -167,9 +165,8 @@ async def get_trend(line: str, station: str, weekday: int):
     if not line or not station or weekday < 0 or weekday > 6:
         raise HTTPException(status_code=400, detail="參數無效")
 
-    # 直接用純站名查詢（preprocessed_data.json 的 key 是純站名）
-    print(f"[DEBUG] 用純站名查詢: '{station}'")
-    result = processor.get_daily_trend(station, weekday)
+    # 查詢（先試純站名，再試帶前綴）
+    result = processor.get_daily_trend(station, weekday, line=line)
     if not result:
         print(f"[DEBUG] ✗ processor.get_daily_trend() 返回空結果")
         raise HTTPException(status_code=404, detail="找不到該站點資料")

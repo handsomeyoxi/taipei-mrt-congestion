@@ -105,6 +105,27 @@ class DataProcessor:
                 return station_with_code[len(code):]
         return station_with_code
 
+    def find_station_key(self, line, station):
+        """Find station key in processor.data
+
+        Tries two formats:
+        1. Pure station name (e.g., '公館')
+        2. Prefixed station name (e.g., 'G公館')
+
+        Returns the key if found, None otherwise
+        """
+        # Try pure station name first
+        if station in self.data:
+            return station
+
+        # Try prefixed format (line + station)
+        prefixed_station = f"{line}{station}"
+        if prefixed_station in self.data:
+            return prefixed_station
+
+        # Not found
+        return None
+
     def load_preprocessed_data(self):
         """Load preprocessed real data JSON (優先方法)"""
         print(f"[INFO] Looking for preprocessed data at: {self.preprocessed_file}")
@@ -645,35 +666,39 @@ class DataProcessor:
         station_lines = {station: lines for station, lines in STATION_LINE_MAPPING.items()}
         return stations, station_lines
 
-    def get_congestion(self, station, hour, weekday):
+    def get_congestion(self, station, hour, weekday, line=None):
         """取得特定站點、時段、星期幾的壅擠程度
 
         Args:
             station: 純站名（如 '板橋'、'公館'）
             hour: 時段 0-23
             weekday: 星期 0-6
+            line: 線路代碼（用於查詢轉乘站如 'BL板橋'）
 
         Returns:
             dict with station field as pure station name
         """
-        # 直接用純站名查詢（preprocessed_data.json 的 key 是純站名）
         pure_station = station
 
-        if station not in self.data:
-            print(f"[DEBUG] 站名 '{station}' 不在 processor.data 中，可用的 key 數: {len(self.data)}")
+        # 尋找正確的 key（先試純站名，再試帶前綴）
+        station_key = self.find_station_key(line or '', station)
+        if not station_key:
+            print(f"[DEBUG] 站名 '{station}' 不在 processor.data 中（嘗試了 '{station}' 和 '{line}{station}' 格式）")
             return None
+
+        print(f"[DEBUG] 找到站點 key: '{station_key}'")
 
         # Lazy loading: 如果該站點未生成數據，動態生成
-        if '_needs_generation' in self.data[station]:
-            self._generate_station_data(station)
+        if '_needs_generation' in self.data[station_key]:
+            self._generate_station_data(station_key)
 
-        if str(weekday) not in self.data[station]:
+        if str(weekday) not in self.data[station_key]:
             return None
 
-        if str(hour) not in self.data[station][str(weekday)]:
+        if str(hour) not in self.data[station_key][str(weekday)]:
             return None
 
-        hour_data = self.data[station][str(weekday)][str(hour)]
+        hour_data = self.data[station_key][str(weekday)][str(hour)]
         people = hour_data.get('people', 0)
 
         # 檢查營運時間（06:00-23:59）
@@ -724,7 +749,7 @@ class DataProcessor:
         }
         return suggestions.get(level, "")
 
-    def get_best_times(self, station, weekday, hour=None, time_range=2, top_n=3):
+    def get_best_times(self, station, weekday, hour=None, time_range=2, top_n=3, line=None):
         """取得該站當天最不擠的時段，或指定時段前後N小時內最不擠的時段
 
         Args:
@@ -733,20 +758,24 @@ class DataProcessor:
             hour: 可選，指定的小時 (0-23)
             time_range: 時間範圍 (小時數)，預設 2，可選 1 或 3
             top_n: 返回前 N 個最不擠的時段，預設 3
+            line: 線路代碼（用於查詢轉乘站如 'BL板橋'）
         """
-        # 直接用純站名查詢（preprocessed_data.json 的 key 是純站名）
-        if station not in self.data:
-            print(f"[DEBUG] 站名 '{station}' 不在 processor.data 中，可用的 key 數: {len(self.data)}")
+        # 尋找正確的 key（先試純站名，再試帶前綴）
+        station_key = self.find_station_key(line or '', station)
+        if not station_key:
+            print(f"[DEBUG] 站名 '{station}' 不在 processor.data 中（嘗試了 '{station}' 和 '{line}{station}' 格式）")
             return []
+
+        print(f"[DEBUG] 找到站點 key: '{station_key}'")
 
         # Lazy loading: 如果該站點未生成數據，動態生成
-        if '_needs_generation' in self.data[station]:
-            self._generate_station_data(station)
+        if '_needs_generation' in self.data[station_key]:
+            self._generate_station_data(station_key)
 
-        if str(weekday) not in self.data[station]:
+        if str(weekday) not in self.data[station_key]:
             return []
 
-        hours = self.data[station][str(weekday)]
+        hours = self.data[station_key][str(weekday)]
 
         # 決定時段範圍（營運時間 06:00-23:59）
         if hour is not None:
@@ -767,9 +796,9 @@ class DataProcessor:
 
                 # 動態計算 level
                 level = "low"
-                if station in self.station_percentiles:
-                    p33 = self.station_percentiles[station]["p33"]
-                    p66 = self.station_percentiles[station]["p66"]
+                if station_key in self.station_percentiles:
+                    p33 = self.station_percentiles[station_key]["p33"]
+                    p66 = self.station_percentiles[station_key]["p66"]
                     if people <= p33:
                         level = "low"
                     elif people <= p66:
@@ -800,26 +829,30 @@ class DataProcessor:
 
         return result
 
-    def get_daily_trend(self, station, weekday):
+    def get_daily_trend(self, station, weekday, line=None):
         """取得該站全天 24 小時的壅擁趨勢
 
         Args:
             station: 純站名（如 '板橋'、'公館'）
             weekday: 星期 0-6
+            line: 線路代碼（用於查詢轉乘站如 'BL板橋'）
         """
-        # 直接用純站名查詢（preprocessed_data.json 的 key 是純站名）
-        if station not in self.data:
-            print(f"[DEBUG] 站名 '{station}' 不在 processor.data 中，可用的 key 數: {len(self.data)}")
+        # 尋找正確的 key（先試純站名，再試帶前綴）
+        station_key = self.find_station_key(line or '', station)
+        if not station_key:
+            print(f"[DEBUG] 站名 '{station}' 不在 processor.data 中（嘗試了 '{station}' 和 '{line}{station}' 格式）")
             return []
+
+        print(f"[DEBUG] 找到站點 key: '{station_key}'")
 
         # Lazy loading: 如果該站點未生成數據，動態生成
-        if '_needs_generation' in self.data[station]:
-            self._generate_station_data(station)
+        if '_needs_generation' in self.data[station_key]:
+            self._generate_station_data(station_key)
 
-        if str(weekday) not in self.data[station]:
+        if str(weekday) not in self.data[station_key]:
             return []
 
-        hours = self.data[station][str(weekday)]
+        hours = self.data[station_key][str(weekday)]
         trend = []
 
         for hour in range(24):
@@ -838,9 +871,9 @@ class DataProcessor:
                 else:
                     # 營運時間動態計算 level
                     level = "low"
-                    if station in self.station_percentiles:
-                        p33 = self.station_percentiles[station]["p33"]
-                        p66 = self.station_percentiles[station]["p66"]
+                    if station_key in self.station_percentiles:
+                        p33 = self.station_percentiles[station_key]["p33"]
+                        p66 = self.station_percentiles[station_key]["p66"]
                         if people <= p33:
                             level = "low"
                         elif people <= p66:
