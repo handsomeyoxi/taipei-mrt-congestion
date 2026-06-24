@@ -27,6 +27,7 @@ function App() {
     const fetchStations = async () => {
       try {
         const response = await axios.get(`${API_BASE}/stations`);
+        console.log('[fetchStations] 拿到的前10個stations:', response.data.stations.slice(0, 10));
         setStations(response.data.stations);
       } catch (err) {
         setError('無法載入站點資料');

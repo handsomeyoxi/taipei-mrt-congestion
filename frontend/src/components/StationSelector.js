@@ -57,6 +57,7 @@ function StationSelector({
 
   // 根據線路分組站點
   const stationsByLine = useMemo(() => {
+    console.log('[stationsByLine] 拿到的前10個stations:', stations.slice(0, 10));
     const grouped = {};
     lineOrder.forEach(code => {
       grouped[code] = [];
