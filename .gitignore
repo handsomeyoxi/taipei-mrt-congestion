@@ -31,11 +31,13 @@ backend/env/
 backend/cache/*
 !backend/cache/congestion_data.json
 !backend/cache/version.txt
+!backend/cache/preprocessed_data.json
 
 # JSON files - except cache data
 *.json
 !backend/cache/congestion_data.json
 !backend/cache/version.txt
+!backend/cache/preprocessed_data.json
 
 # Node
 node_modules/
