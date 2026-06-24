@@ -66,7 +66,18 @@ async def root():
 @app.get("/stations")
 async def get_stations():
     """取得所有台北捷運站點"""
+    # Debug log：印出 processor.data 的狀態
+    print(f"\n[DEBUG] /stations endpoint called")
+    print(f"[DEBUG] processor.data 長度: {len(processor.data)}")
+    if processor.data:
+        data_keys = list(processor.data.keys())[:5]
+        print(f"[DEBUG] 前5個 key: {data_keys}")
+    else:
+        print(f"[DEBUG] processor.data 是空的！")
+
     stations = processor.get_stations()
+    print(f"[DEBUG] get_stations() 返回: {len(stations)} 個站點")
+
     if not stations:
         raise HTTPException(status_code=500, detail="無法取得站點資料")
     return {"stations": stations}
