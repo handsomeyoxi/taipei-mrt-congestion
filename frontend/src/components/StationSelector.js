@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import './StationSelector.css';
 
 function StationSelector({
@@ -53,21 +53,6 @@ function StationSelector({
     return null;
   };
 
-  // 查找站點屬於的所有線路
-  const findAllLines = (stationName) => {
-    const lines = [];
-    lineOrder.forEach(code => {
-      if (stationsByLine[code] && stationsByLine[code].some(s => {
-        const lineCode = extractLineCode(s);
-        if (!lineCode) return false;
-        return s.substring(lineCode.length) === stationName;
-      })) {
-        lines.push(code);
-      }
-    });
-    return lines;
-  };
-
   // 根據線路分組站點
   const stationsByLine = useMemo(() => {
     const grouped = {};
@@ -103,6 +88,21 @@ function StationSelector({
 
     return grouped;
   }, [stations]);
+
+  // 查找站點屬於的所有線路
+  const findAllLines = (stationName) => {
+    const lines = [];
+    lineOrder.forEach(code => {
+      if (stationsByLine[code] && stationsByLine[code].some(s => {
+        const lineCode = extractLineCode(s);
+        if (!lineCode) return false;
+        return s.substring(lineCode.length) === stationName;
+      })) {
+        lines.push(code);
+      }
+    });
+    return lines;
+  };
 
   // 處理線路變更
   const handleLineChange = (e) => {
