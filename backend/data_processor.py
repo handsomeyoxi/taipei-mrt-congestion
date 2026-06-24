@@ -526,15 +526,20 @@ class DataProcessor:
         all_stations = list(STATION_LINE_MAPPING.keys())
 
         self.data = {}
-        # 只存儲站點基本資訊，不預先生成所有時間數據
+        # 為每個站點建立所有線路的前綴版本
+        # 轉乘站會同時以多條線的前綴存在（例如 O頭前庄 和 Y頭前庄）
         for station in all_stations:
-            station_with_code = self.get_station_with_line_code(station)
-            # 為每個站點存儲一個標記，表示需要動態生成數據
-            # 使用特殊的佔位符結構確保 station_with_code 能被正確返回
-            self.data[station_with_code] = {'_needs_generation': True}
+            # 獲取這個站點屬於的所有線路
+            line_codes = self.get_station_lines(station)
+
+            # 為每條線路都建立一個條目
+            for line_code in line_codes:
+                station_with_code = f"{line_code}{station}"
+                self.data[station_with_code] = {'_needs_generation': True}
 
         self.data_initialized = True
-        print(f"[OK] Initialized {len(self.data)} stations for lazy loading (黃線 {len([s for s in self.data.keys() if s.startswith('Y')])} 站)")
+        yellow_count = len([s for s in self.data.keys() if s.startswith('Y')])
+        print(f"[OK] Initialized {len(self.data)} station entries for lazy loading (黃線 {yellow_count} 站)")
         # Cache disabled - not saving to disk
 
     def _generate_station_data(self, station_with_code):
